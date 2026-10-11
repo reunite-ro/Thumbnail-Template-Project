@@ -38,7 +38,9 @@ Sizes were checked in October 2026. Platforms change their specs from time to ti
 
 ## Templates
 
-All 18 templates work in every size. Wide sizes (YouTube, Blog / Link) and tall sizes (Vertical, 4:5, Square) each get their own arrangement of the same design.
+All 36 templates work in every size. Wide sizes (YouTube, Blog / Link) and tall sizes (Vertical, 4:5, Square) each get their own arrangement of the same design.
+
+Use the chips above the template grid to show only the templates for one niche: **Tutorial**, **Tech**, **Education**, **Business**, **Entertainment**, **Lifestyle** or **Blog & posts**.
 
 | Template | Best for |
 |---|---|
@@ -50,14 +52,32 @@ All 18 templates work in every size. Wide sizes (YouTube, Blog / Link) and tall 
 | Neon Glow | Glowing neon colors, a retro grid floor and a glass card. Good for tech topics. |
 | Tutorial | Your screenshot in a browser window, for how-to videos. |
 | Phone | Your screenshot on a phone, for app and mobile tutorials. |
+| Laptop | Your screenshot on a laptop, for software, website and course tutorials. |
+| Code Editor | Your title typed into a dark code editor, with line numbers and a cursor. For coding, hosting and server topics. |
+| Error Fix | A red error pop-up with your title, for "how to fix…" and troubleshooting videos. |
 | Checklist | A heading plus ✓ items. |
+| Steps | A heading plus numbered steps joined by a line. |
+| Chalkboard | Chalk writing on a green board in a wooden frame, with doodles. For lessons, exams and explainers. |
+| Review Score | Your product on a podium, with a score ring and stars. |
+| Tier List | An S–D tier chart beside your title, with your photo in the top S tile. For "ranking every…" videos. |
 | Promo / Sale | A starburst badge and a button, for offers, discounts and launches. |
+| Growth Chart | A rising chart and a big number, for income, sales, traffic and results. |
 | Versus | Two sides head to head. |
+| Before / After | Two halves with a slider handle, for makeovers, fitness, edits and redesigns. |
 | Podcast | Round host and guest photos, an episode number and a sound wave. |
 | News | A news-style lower third for updates and announcements. |
+| Case File | A dark evidence board with a pinned black-and-white photo, red string and a stamp. For mystery, true crime and history. |
+| Gaming | Slanted color stripes, halftone dots and a leaning title, for gaming and high-energy videos. |
+| Comic | A comic panel with speed lines, a speech bubble for your title and a POW burst. For fun, kids and reaction videos. |
+| Vlog Camera | A camera viewfinder over your photo, with REC, corner marks and a location pin. For vlogs and travel. |
+| Cinematic | Movie letterbox bars and a widely spaced title, for short films, travel films and documentaries. |
+| Music Player | A "now playing" screen with cover art, song title, artist and player controls. |
+| Recipe | Your food photo on a plate, with herbs and a round badge such as `15 MIN`. A transparent dish PNG sits on the plate. |
 | Photo Frame | A photo in a bold color frame with a title band. |
 | Polaroid | A tilted instant photo with tape and a handwritten caption. A cut-out pops out of the photo. |
 | Quote | A quote with your name and photo. |
+| Chat Story | Chat bubbles that take turns left and right, for text stories and Q&A. |
+| Social Post | Your title as a social media post with avatar, name, tick and like count. For story time and hot takes. |
 | Minimal | Big type and lots of space. |
 | Clean Article | An editorial look for blog posts. |
 
@@ -66,16 +86,20 @@ All 18 templates work in every size. Wide sizes (YouTube, Blog / Link) and tall 
 - Wrap words in `*stars*` to highlight them, for example `I Tried *Every* Budget Camera`.
 - Press Enter to start a new line.
 - **Versus:** write `Shared Hosting vs VPS` (or use `lawan`), and each side gets its own half.
-- **Checklist:** the first line is the heading, and each line after it becomes a ✓ item.
+- **Checklist** and **Steps:** the first line is the heading, and each line after it becomes an item (✓ or numbered).
 - **Quote:** the title is the quote, and the field below it is the author's name.
+- **Chat Story:** each line becomes a message. Messages take turns: left, right, left…
 
 The text sizes itself as big as it can fit. Three to six words read best at thumbnail size.
 
 The other text fields are:
 
-- **Tag:** the small label above the title.
+- **Tag:** the small label above the title. Some templates use it differently:
+  - Code Editor: the file tab. Error Fix: the error message. Vlog Camera: the location.
+  - Before / After: the two labels, written as `Sebelum / Selepas`. Without a `/`, they read BEFORE and AFTER.
+  - Case File: the stamp. Cinematic: the small line above the title. Music Player: the artist. Chat Story: the contact name. Social Post: the display name. Chalkboard: the lesson. Comic: the burst word.
 - **Channel / site name:** shown with your logo.
-- **Big number:** for Listicle, or the episode number for Podcast.
+- **Big number:** for Listicle and Growth Chart (for example `+250%` or `RM10K`), the episode number for Podcast, the score for Review Score (for example `9.2`, `8/10` or `4.5`, which also sets the stars), the case number for Case File, the like count for Social Post, or the badge for Recipe (for example `15 MIN`).
 - **Badge text** and **Button text:** for Promo.
 
 ## Styles
@@ -92,10 +116,12 @@ The other text fields are:
 
 | Slot | What it's for | Controls |
 |---|---|---|
-| Background photo | The main photo, or your screenshot in Tutorial and Phone | Zoom, left ↔ right, top ↕ bottom, darken |
+| Background photo | The main photo, or your screenshot in Tutorial, Phone and Laptop | Zoom (30–300%), left ↔ right, top ↕ bottom, opacity, blur, darken. Zoomed out below 100%: corners, border, and what fills the space around it |
 | Cut-out | A transparent PNG of you or a product | Size, left ↔ right, up ↕ down, sticker outline and its color |
-| Second cut-out | The right side in Versus, or the guest in Podcast | Uses the cut-out controls |
+| Second cut-out | The right side in Versus, the guest in Podcast, or the after photo in Before / After (with no after photo, the background photo's before side turns gray) | Uses the cut-out controls |
 | Logo / avatar | Shown next to your channel or site name | Auto, Circle or Full logo |
+
+Zoom the background photo out below 100% to show all of it as a card, which suits screenshots. The space around the card is filled with a blurred copy of the photo, or with the background pattern. Lower the opacity to let the pattern show through the photo, or blur the photo to make the title easier to read.
 
 To add an image, click a slot, drag a file onto it, or paste with Ctrl+V. If you drop or paste onto the preview, the tool sorts it for you: photos become the background and transparent PNGs become the cut-out.
 
@@ -130,7 +156,7 @@ The common changes are all near the top of the `<script>`:
 | A Look | `LOOKS`: a font, a palette name, a highlight, an effect and a pattern |
 | A font | `FONTS`, and add the family to the Google Fonts `<link>` in `<head>` |
 | A size | `FORMATS`: name, size, file name and note. Add its guides in `drawGuides()`. |
-| A template | An entry in `TEMPLATES`, plus a drawing function with the same key in `RENDER` |
+| A template | An entry in `TEMPLATES` (its `cats` choose the filter chips it appears under), plus a drawing function with the same key in `RENDER`. Draw the background photo with `drawPhoto()` so the photo controls apply. |
 
 Each template function receives `g`, which holds:
 

@@ -56,6 +56,10 @@
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; min-width: 0; }
 
+  .cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .cat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; font-size: 12px; color: var(--muted); cursor: pointer; }
+  .cat:hover { color: var(--text); border-color: var(--muted); }
+  .cat.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
   .templates { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
   .tpl { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 5px; text-align: left; cursor: pointer; min-width: 0; }
   .tpl canvas { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 4px; background: #000; }
@@ -80,9 +84,10 @@
   .color input { width: 100%; height: 34px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); cursor: pointer; }
 
   .img-slot { display: flex; gap: 8px; align-items: stretch; margin-bottom: 10px; }
-  .drop { flex: 1; display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px dashed var(--line); border-radius: 9px; cursor: pointer; background: var(--panel-2); min-width: 0; }
+  .drop { position: relative; flex: 1; display: flex; gap: 10px; align-items: center; padding: 8px; border: 1px dashed var(--line); border-radius: 9px; cursor: pointer; background: var(--panel-2); min-width: 0; }
   .drop.over { border-color: var(--accent); background: #232633; }
-  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  /* anchored inside .drop so focusing it (label click) doesn't make the scrolling panel jump */
+  .drop input { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .drop .thumb { width: 46px; height: 46px; flex: none; border-radius: 6px; background: #0b0c10 center / contain no-repeat;
     display: grid; place-items: center; color: var(--muted); font-size: 20px; }
   .drop .thumb.has { color: transparent; }
@@ -156,6 +161,7 @@
 
     <section class="group">
       <h2>Template</h2>
+      <div class="cats" id="tplCats"></div>
       <div class="templates" id="templates"></div>
       <p class="hint" id="tplDesc"></p>
     </section>
@@ -167,10 +173,13 @@
         <em class="hint">Wrap words in <code>*stars*</code> to highlight them. Enter starts a new line. 3–6 words reads best at small sizes.</em>
         <em class="hint" data-only="versus">Versus: write it as <code>Shared Hosting vs VPS</code> (or “lawan”). Each side gets its own half.</em>
         <em class="hint" data-only="checklist">Checklist: the first line is the heading. Each new line after it becomes a ✓ item.</em>
+        <em class="hint" data-only="steps">Steps: the first line is the heading. Each new line after it becomes a numbered step.</em>
+        <em class="hint" data-only="chat">Chat: each new line becomes a message. Messages take turns: left, right, left…</em>
+        <em class="hint" data-only="beforeafter">Before / After: put your own labels in the field below as <code>Sebelum / Selepas</code>. Leave it without a “/” for BEFORE and AFTER.</em>
         <em class="hint" data-only="quote">Quote: the title is the quote. Put the author’s name in the field below.</em>
       </label>
       <label class="field"><span id="kickerLabel">Tag / kicker</span><input type="text" data-k="kicker" placeholder="e.g. Tutorial, Part 2, New"></label>
-      <label class="field" data-only="number podcast"><span id="numberLabel">Big number</span><input type="text" data-k="number" maxlength="4" placeholder="7"></label>
+      <label class="field" data-only="number podcast review growth mystery post recipe"><span id="numberLabel">Big number</span><input type="text" data-k="number" maxlength="8" placeholder="7"></label>
       <label class="field" data-only="promo"><span>Badge text</span><input type="text" data-k="badge" maxlength="14" placeholder="50% OFF, RM9, FREE"></label>
       <label class="field" data-only="promo"><span>Button text</span><input type="text" data-k="cta" maxlength="28" placeholder="Order now, Daftar sekarang"></label>
       <label class="field"><span>Channel / site name</span><input type="text" data-k="handle" placeholder="@yourchannel or yoursite.com"></label>
@@ -229,19 +238,40 @@
 
       <div class="img-slot" data-slot="bg">
         <label class="drop"><input type="file" accept="image/*"><span class="thumb">＋</span>
-          <span class="drop-text"><b>Background photo</b><small>Click, drop, or paste (Ctrl+V). Tutorial / Phone: your screenshot.</small></span></label>
+          <span class="drop-text"><b>Background photo</b><small>Click, drop, or paste (Ctrl+V). Tutorial, Phone, Laptop: your screenshot.</small></span></label>
         <button class="x" title="Remove background photo" hidden>✕</button>
       </div>
       <div class="img-opts" data-for="bg" hidden>
-        <label class="field"><span>Zoom <output data-out="bgZoom"></output></span><input type="range" data-k="bgZoom" min="1" max="3" step="0.01"></label>
+        <label class="field"><span>Zoom <output data-out="bgZoom"></output></span><input type="range" data-k="bgZoom" min="0.3" max="3" step="0.01"></label>
         <div class="row">
           <label class="field"><span>Left ↔ right</span><input type="range" data-k="bgX" min="0" max="1" step="0.01"></label>
           <label class="field"><span>Top ↕ bottom</span><input type="range" data-k="bgY" min="0" max="1" step="0.01"></label>
         </div>
+        <div class="row">
+          <label class="field"><span>Opacity <output data-out="bgOpacity"></output></span><input type="range" data-k="bgOpacity" min="0.1" max="1" step="0.01"></label>
+          <label class="field"><span>Blur <output data-out="bgBlur"></output></span><input type="range" data-k="bgBlur" min="0" max="1" step="0.01"></label>
+        </div>
+        <p class="sub-label">When zoomed out below 100%</p>
+        <div class="row">
+          <label class="field"><span>Corners <output data-out="bgRadius"></output></span><input type="range" data-k="bgRadius" min="0" max="1" step="0.01"></label>
+          <label class="field"><span>Border</span>
+            <select data-k="bgBorder">
+              <option value="none">None</option>
+              <option value="white">White</option>
+              <option value="accent">Accent color</option>
+            </select>
+          </label>
+        </div>
+        <label class="field"><span>Space around the photo</span>
+          <select data-k="bgFill">
+            <option value="blur">Blurred photo</option>
+            <option value="pattern">Background pattern</option>
+          </select>
+        </label>
       </div>
       <label class="field"><span>Darken background <output data-out="overlay"></output></span><input type="range" data-k="overlay" min="0" max="1" step="0.01"></label>
 
-      <div class="img-slot" data-slot="cut" data-only="bold split clean tutorial promo versus news quote reaction glow checklist podcast polaroid">
+      <div class="img-slot" data-slot="cut" data-only="bold split clean tutorial promo versus news quote reaction glow checklist podcast polaroid laptop code error steps review growth gaming vlog tier mystery music chat post chalk recipe comic">
         <label class="drop"><input type="file" accept="image/png,image/webp,image/*"><span class="thumb">＋</span>
           <span class="drop-text"><b>Cut-out (transparent PNG)</b><small>You, a product, a logo. Windows Paint → “Remove background” makes one.</small></span></label>
         <button class="x" title="Remove cut-out" hidden>✕</button>
@@ -258,9 +288,9 @@
         </div>
       </div>
 
-      <div class="img-slot" data-slot="cut2" data-only="versus podcast">
+      <div class="img-slot" data-slot="cut2" data-only="versus podcast beforeafter">
         <label class="drop"><input type="file" accept="image/png,image/webp,image/*"><span class="thumb">＋</span>
-          <span class="drop-text"><b>Second cut-out</b><small>Versus: the right side. Podcast: your guest.</small></span></label>
+          <span class="drop-text"><b>Second cut-out</b><small>Versus: the right side. Podcast: your guest. Before / After: the after photo.</small></span></label>
         <button class="x" title="Remove second cut-out" hidden>✕</button>
       </div>
 
@@ -387,25 +417,48 @@ const LOOKS = [
   { name: 'Soft',      font: 'Fredoka',          palette: 'Mint',      hlStyle: 'marker', effect: 'shadow',  bgStyle: 'blobs',    upper: false },
 ];
 
+// cats: the filter chips each template shows up under (see TEMPLATE_CATS)
 const TEMPLATES = {
-  bold:      { name: 'Face + Bold',   desc: 'Huge text plus your cut-out photo. The classic YouTube look.' },
-  impact:    { name: 'Center Impact', desc: 'One loud, centered message over a photo.' },
-  split:     { name: 'Split',         desc: 'Color panel and photo with a slanted edge.' },
-  number:    { name: 'Listicle',      desc: 'Giant number for “7 tips…” style posts.' },
-  reaction:  { name: 'Reaction',      desc: 'Arrow and circle pointing at something in your photo, plus your face. Move the photo with the sliders to line it up.' },
-  glow:      { name: 'Neon Glow',     desc: 'Glowing neon colors, a retro grid floor and a glass card. Great for tech topics.' },
-  tutorial:  { name: 'Tutorial',      desc: 'Your screenshot in a browser window. Great for how-to videos (cPanel, WordPress…).' },
-  phone:     { name: 'Phone',         desc: 'Your screenshot on a phone. Great for app and mobile tutorials.' },
-  checklist: { name: 'Checklist',     desc: 'A heading plus ✓ items. Each new line in the title becomes an item.' },
-  promo:     { name: 'Promo / Sale',  desc: 'Starburst badge and a button. For offers, discounts and launches.' },
-  versus:    { name: 'Versus',        desc: 'Two sides head to head. Write the title as “A vs B”.' },
-  podcast:   { name: 'Podcast',       desc: 'Round host and guest photos, an episode number and a sound wave.' },
-  news:      { name: 'News',          desc: 'News-style lower third for updates and announcements.' },
-  frame:     { name: 'Photo Frame',   desc: 'Photo in a bold color frame with a title band.' },
-  polaroid:  { name: 'Polaroid',      desc: 'Tilted instant photo with tape and a handwritten caption. A cut-out pops out of the photo.' },
-  quote:     { name: 'Quote',         desc: 'A quote with your name and photo. Great for social posts.' },
-  minimal:   { name: 'Minimal',       desc: 'Big type and lots of space. Calm and modern.' },
-  clean:     { name: 'Clean Article', desc: 'Editorial look for blog posts.' },
+  bold:      { name: 'Face + Bold',   cats: 'lifestyle business', desc: 'Huge text plus your cut-out photo. The classic YouTube look.' },
+  impact:    { name: 'Center Impact', cats: 'lifestyle blog',     desc: 'One loud, centered message over a photo.' },
+  split:     { name: 'Split',         cats: 'business blog',      desc: 'Color panel and photo with a slanted edge.' },
+  number:    { name: 'Listicle',      cats: 'education business blog', desc: 'Giant number for “7 tips…” style posts.' },
+  reaction:  { name: 'Reaction',      cats: 'entertainment lifestyle tutorial', desc: 'Arrow and circle pointing at something in your photo, plus your face. Move the photo with the sliders to line it up.' },
+  glow:      { name: 'Neon Glow',     cats: 'tech',               desc: 'Glowing neon colors, a retro grid floor and a glass card. Great for tech topics.' },
+  tutorial:  { name: 'Tutorial',      cats: 'tutorial tech',      desc: 'Your screenshot in a browser window. Great for how-to videos (cPanel, WordPress…).' },
+  phone:     { name: 'Phone',         cats: 'tutorial tech',      desc: 'Your screenshot on a phone. Great for app and mobile tutorials.' },
+  laptop:    { name: 'Laptop',        cats: 'tutorial tech',      desc: 'Your screenshot on a laptop. Great for software, website and course tutorials.' },
+  code:      { name: 'Code Editor',   cats: 'tutorial tech',      desc: 'Your title typed into a dark code editor, with line numbers and a cursor. For coding, hosting and server topics.' },
+  error:     { name: 'Error Fix',     cats: 'tutorial tech',      desc: 'A red error pop-up with your title. For “how to fix…” and troubleshooting videos.' },
+  checklist: { name: 'Checklist',     cats: 'tutorial education business blog', desc: 'A heading plus ✓ items. Each new line in the title becomes an item.' },
+  steps:     { name: 'Steps',         cats: 'tutorial education business', desc: 'A heading plus numbered steps joined by a line. Each new line in the title becomes a step.' },
+  chalk:     { name: 'Chalkboard',    cats: 'education tutorial', desc: 'Chalk writing on a green board in a wooden frame, with doodles. For lessons, exams and explainers.' },
+  review:    { name: 'Review Score',  cats: 'tech lifestyle',     desc: 'Your product on a podium with a score ring and stars. Put the score in the Score field.' },
+  tier:      { name: 'Tier List',     cats: 'entertainment tech', desc: 'An S–D tier chart beside your title. The top S tile shows your photo. For “ranking every…” videos.' },
+  promo:     { name: 'Promo / Sale',  cats: 'business',           desc: 'Starburst badge and a button. For offers, discounts and launches.' },
+  growth:    { name: 'Growth Chart',  cats: 'business',           desc: 'A rising chart and a big number. For income, sales, traffic and results.' },
+  versus:    { name: 'Versus',        cats: 'tech business',      desc: 'Two sides head to head. Write the title as “A vs B”.' },
+  beforeafter: { name: 'Before / After', cats: 'lifestyle tutorial', desc: 'Two halves with a slider handle. Background photo = before, second image = after. With one photo, the before side turns gray.' },
+  podcast:   { name: 'Podcast',       cats: 'entertainment business', desc: 'Round host and guest photos, an episode number and a sound wave.' },
+  news:      { name: 'News',          cats: 'business tech',      desc: 'News-style lower third for updates and announcements.' },
+  mystery:   { name: 'Case File',     cats: 'entertainment education', desc: 'Dark evidence board: a pinned black-and-white photo, red string and a stamp. For mystery, true crime and history.' },
+  gaming:    { name: 'Gaming',        cats: 'entertainment lifestyle', desc: 'Slanted color stripes, halftone dots and a leaning title. For gaming and high-energy videos.' },
+  comic:     { name: 'Comic',         cats: 'entertainment',      desc: 'Comic panel with speed lines, a speech bubble for your title and a POW burst. For fun, kids and reaction videos.' },
+  vlog:      { name: 'Vlog Camera',   cats: 'lifestyle',          desc: 'Camera viewfinder over your photo: REC, corner marks and a location pin. For vlogs and travel.' },
+  cinema:    { name: 'Cinematic',     cats: 'entertainment lifestyle', desc: 'Movie letterbox bars and a widely spaced title. For short films, travel films and documentaries.' },
+  music:     { name: 'Music Player',  cats: 'entertainment',      desc: 'A “now playing” screen: cover art, song title, artist and player controls. For music, covers and playlists.' },
+  recipe:    { name: 'Recipe',        cats: 'lifestyle',          desc: 'Your food photo on a plate, with herbs and a round badge (e.g. 15 MIN). A transparent dish PNG sits on the plate.' },
+  frame:     { name: 'Photo Frame',   cats: 'lifestyle blog',     desc: 'Photo in a bold color frame with a title band.' },
+  polaroid:  { name: 'Polaroid',      cats: 'lifestyle blog',     desc: 'Tilted instant photo with tape and a handwritten caption. A cut-out pops out of the photo.' },
+  quote:     { name: 'Quote',         cats: 'blog business education', desc: 'A quote with your name and photo. Great for social posts.' },
+  chat:      { name: 'Chat Story',    cats: 'entertainment lifestyle', desc: 'Chat bubbles: each new line in the title is a message, taking turns left and right. For text stories and Q&A.' },
+  post:      { name: 'Social Post',   cats: 'blog entertainment', desc: 'Your title as a social media post with avatar, name, tick and like count. For story time and hot takes.' },
+  minimal:   { name: 'Minimal',       cats: 'blog',               desc: 'Big type and lots of space. Calm and modern.' },
+  clean:     { name: 'Clean Article', cats: 'blog',               desc: 'Editorial look for blog posts.' },
+};
+const TEMPLATE_CATS = {
+  all: 'All', tutorial: 'Tutorial', tech: 'Tech', education: 'Education', business: 'Business',
+  entertainment: 'Entertainment', lifestyle: 'Lifestyle', blog: 'Blog & posts',
 };
 const KICKER_LABELS = {
   quote: 'Author name',
@@ -414,8 +467,26 @@ const KICKER_LABELS = {
   promo: 'Tag (e.g. LIMITED TIME)',
   podcast: 'Show label (e.g. PODCAST)',
   polaroid: 'Photo caption',
+  code: 'Editor tab (e.g. setup.sh, Part 2)',
+  error: 'Error label (e.g. ERROR 500)',
+  vlog: 'Location (e.g. Kuala Lumpur)',
+  beforeafter: 'Labels (e.g. Before / After, Sebelum / Selepas)',
+  mystery: 'Stamp (e.g. CLASSIFIED, UNSOLVED)',
+  cinema: 'Small line above the title (e.g. A FILM BY…)',
+  music: 'Artist name',
+  chat: 'Contact name',
+  post: 'Display name',
+  chalk: 'Lesson (e.g. LESSON 1, BAB 3)',
+  comic: 'Burst word (e.g. WOW!, POW!)',
 };
-const NUMBER_LABELS = { podcast: 'Episode number' };
+const NUMBER_LABELS = {
+  podcast: 'Episode number',
+  review: 'Score (e.g. 9.2, 8/10, 4.5)',
+  growth: 'Big number (e.g. +250%, RM10K, 10x)',
+  mystery: 'Case number',
+  post: 'Like count (e.g. 12K)',
+  recipe: 'Badge (e.g. 15 MIN, 3 BAHAN)',
+};
 
 const DEFAULTS = {
   format: 'youtube', template: 'bold',
@@ -423,7 +494,7 @@ const DEFAULTS = {
   badge: '50% OFF', cta: 'Order now',
   upper: true, hlStyle: 'box', effect: 'shadow', textScale: 1,
   font: 'Anton', bg: '#111216', accent: '#FFD400', text: '#FFFFFF', bgStyle: 'lines',
-  overlay: 0.45, bgZoom: 1, bgX: 0.5, bgY: 0.5,
+  overlay: 0.45, bgZoom: 1, bgX: 0.5, bgY: 0.5, bgOpacity: 1, bgBlur: 0, bgRadius: 0.25, bgBorder: 'none', bgFill: 'blur',
   cutScale: 1, cutX: 0, cutY: 0, cutOutline: true, outlineColor: '#FFFFFF',
   logoShape: 'auto',
   guides: true, fileType: 'jpg', exportFormats: ['youtube', 'tiktok', 'portrait', 'square', 'blog'],
@@ -505,6 +576,19 @@ function polyPath(ctx, pts) {
 }
 function poly(ctx, pts) { polyPath(ctx, pts); ctx.fill(); }
 function clipPoly(ctx, pts) { polyPath(ctx, pts); ctx.clip(); }
+// tiny copy of a photo; scaled back up it reads as a soft blur
+const blurCache = new WeakMap();
+function blurred(img) {
+  let cv = blurCache.get(img);
+  if (cv) return cv;
+  const sc = 32 / Math.max(img.width, img.height);
+  cv = document.createElement('canvas');
+  cv.width = Math.max(1, Math.round(img.width * sc));
+  cv.height = Math.max(1, Math.round(img.height * sc));
+  cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+  blurCache.set(img, cv);
+  return cv;
+}
 function drawCover(ctx, img, x, y, w, h, zoom = 1, fx = 0.5, fy = 0.5) {
   const s = Math.max(w / img.width, h / img.height) * zoom;
   const dw = img.width * s, dh = img.height * s;
@@ -524,6 +608,7 @@ function headFont(size) {
 }
 const uiFont = (size, w = 800) => `${w} ${size}px Inter, "Segoe UI", Arial, sans-serif`;
 const handFont = size => `400 ${size}px "Permanent Marker", "Comic Sans MS", cursive`;
+const monoFont = (size, w = 600) => `${w} ${size}px ui-monospace, "Cascadia Code", Consolas, Menlo, monospace`;
 
 /* =========================================================
    Title text: *highlight* parsing, wrapping, auto-fit
@@ -917,11 +1002,89 @@ function cutout(g, cx, bottom, maxH, maxW, img = images.cut, shift = g.s.cutX) {
   return { x, y, w, h };
 }
 
+/* ---------- background photo ---------- */
+// Blurred copy of a photo, kept for the last few blur amounts used (the photo's own blur, plus backdrops)
+const blurHits = [];
+function blurredPhoto(img, amt) {
+  const hit = blurHits.find(b => b.img === img && b.amt === amt);
+  if (hit) return hit.canvas;
+  const sc = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * sc)), h = Math.max(1, Math.round(img.height * sc));
+  const r = amt * 0.03 * Math.max(w, h);
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  const x = cv.getContext('2d');
+  if ('filter' in x) {
+    // drawn a little oversized so the edges blur into the photo, not into transparency
+    x.filter = `blur(${r.toFixed(1)}px)`;
+    x.drawImage(img, -r * 2, -r * 2, w + r * 4, h + r * 4);
+  } else {
+    // no canvas filters (older Safari): shrink it, then scale it back up
+    const t = document.createElement('canvas'), d = 1 + r / 3;
+    t.width = Math.max(1, Math.round(w / d)); t.height = Math.max(1, Math.round(h / d));
+    t.getContext('2d').drawImage(img, 0, 0, t.width, t.height);
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(t, 0, 0, w, h);
+  }
+  blurHits.push({ img, amt, canvas: cv });
+  if (blurHits.length > 3) blurHits.shift();
+  return cv;
+}
+
+// The background photo with its controls: zoom, position, blur and opacity. Zoomed out below 100%, it becomes a
+// card (corners, border, shadow) on a blurred copy of itself or on the background pattern.
+function drawPhoto(g, x, y, w, h) {
+  const { ctx, s, k } = g;
+  if (s.bgOpacity >= 1) { photoLayer(g, x, y, w, h); return; }
+  // see-through: draw it on its own layer first so the card, its shadow and the fill fade as one
+  const L = document.createElement('canvas');
+  L.width = Math.max(1, Math.ceil(w * k)); L.height = Math.max(1, Math.ceil(h * k));
+  const lc = L.getContext('2d');
+  lc.scale(L.width / w, L.height / h);
+  photoLayer({ ...g, ctx: lc }, 0, 0, w, h);
+  ctx.save();
+  ctx.globalAlpha = s.bgOpacity;
+  ctx.drawImage(L, x, y, w, h);
+  ctx.restore();
+}
+function photoLayer(g, x, y, w, h) {
+  const { ctx, s } = g;
+  const img = s.bgBlur > 0 ? blurredPhoto(images.bg, s.bgBlur) : images.bg;
+  const cover = Math.max(w / img.width, h / img.height);
+  const dw = img.width * cover * s.bgZoom, dh = img.height * cover * s.bgZoom;
+  const dx = x + (w - dw) * s.bgX, dy = y + (h - dh) * s.bgY;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  if (s.bgZoom < 1) {
+    if (s.bgFill === 'pattern') paintBackground(g, x, y, w, h, false);
+    else {
+      const bw = img.width * cover, bh = img.height * cover;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(blurred(images.bg), x + (w - bw) * s.bgX, y + (h - bh) * s.bgY, bw, bh);
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(x, y, w, h);
+    }
+    const m = Math.min(dw, dh), r = s.bgRadius * m * 0.25;
+    const b = s.bgBorder === 'none' ? 0 : Math.max(1, m * 0.025);
+    setShadow(g, m * 0.08, m * 0.025, 'rgba(0,0,0,.45)');
+    ctx.fillStyle = !b ? '#000000' : s.bgBorder === 'accent' ? s.accent : '#FFFFFF';
+    rr(ctx, dx - b, dy - b, dw + b * 2, dh + b * 2, r + b); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    rr(ctx, dx, dy, dw, dh, r); ctx.clip();
+  }
+  ctx.drawImage(img, dx, dy, dw, dh);
+  ctx.restore();
+}
+
 /* ---------- backgrounds ---------- */
-// Background photo (cover-fit) or, with no photo, a gradient with the chosen pattern.
+// Background photo or, with no photo, a gradient with the chosen pattern.
 function paintBackground(g, x = 0, y = 0, w = g.W, h = g.H, usePhoto = true) {
   const { ctx, s } = g;
-  if (usePhoto && images.bg) { drawCover(ctx, images.bg, x, y, w, h, s.bgZoom, s.bgX, s.bgY); return; }
+  if (usePhoto && images.bg) {
+    // a see-through photo shows the pattern behind it
+    if (s.bgOpacity < 1) paintBackground(g, x, y, w, h, false);
+    drawPhoto(g, x, y, w, h);
+    return;
+  }
   const style = s.bgStyle || 'lines';
   const light = isLight(s.bg), R = Math.max(w, h);
   ctx.save();
@@ -1047,9 +1210,9 @@ function starPath(ctx, cx, cy, r, spikes, depth) {
   ctx.closePath();
 }
 // Starburst with the badge text. The part with a digit ("50%", "RM9") is big, the rest ("OFF") small.
-function drawBadge(g, cx, cy, r) {
+function drawBadge(g, cx, cy, r, text = g.s.badge) {
   const { ctx, s } = g;
-  const txt = (s.badge || '').trim().toUpperCase();
+  const txt = (text || '').trim().toUpperCase();
   if (!txt) return;
   const toks = txt.split(/\s+/);
   let bi = toks.findIndex(t => /\d/.test(t));
@@ -1258,6 +1421,151 @@ function soundWave(g, cy, amp) {
   ctx.restore();
 }
 
+/* ---------- steps, error, review, growth, vlog pieces ---------- */
+function stepIcon(g, cx, cy, r, n) {
+  const { ctx, s } = g;
+  ctx.save();
+  setShadow(g, r * 0.4, r * 0.1, 'rgba(0,0,0,.25)');
+  ctx.fillStyle = s.accent; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = inkOn(s.accent); ctx.font = uiFont(r * (n > 9 ? 0.95 : 1.15), 800);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(String(n), cx, cy + r * 0.06);
+  ctx.restore();
+}
+// Rounded warning triangle with an exclamation mark
+function warnIcon(g, cx, cy, size, fill, mark) {
+  const { ctx } = g;
+  const h = size * 0.86;
+  ctx.save();
+  ctx.fillStyle = fill; ctx.strokeStyle = fill; ctx.lineJoin = 'round'; ctx.lineWidth = size * 0.12;
+  polyPath(ctx, [[cx, cy - h / 2], [cx + size / 2, cy + h / 2], [cx - size / 2, cy + h / 2]]);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = mark;
+  rr(ctx, cx - size * 0.055, cy - h * 0.16, size * 0.11, h * 0.4, size * 0.055); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy + h * 0.36, size * 0.065, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+}
+// "9.2", "8/10", "4,5" → shown value, its scale and how full it is. Anything else (e.g. "A+") shows as plain text.
+function parseScore(t) {
+  t = String(t || '').trim();
+  const m = t.match(/^(\d+(?:[.,]\d+)?)\s*(?:\/\s*(\d+))?$/);
+  if (!m) return { text: t, max: 0, f: 1 };
+  const v = parseFloat(m[1].replace(',', '.'));
+  const max = m[2] ? +m[2] : v <= 5 ? 5 : v <= 10 ? 10 : 100;
+  return { text: m[1], max, f: max ? clamp(v / max, 0, 1) : 1 };
+}
+function scoreRing(g, cx, cy, r, sc) {
+  if (!sc.text) return;
+  const { ctx, s } = g;
+  const disc = isLight(s.bg) ? '#FFFFFF' : shade(s.bg, -0.35), ink = inkOn(disc);
+  const lw = r * 0.13, ring = r - lw * 0.95;
+  ctx.save();
+  setShadow(g, r * 0.3, r * 0.08, 'rgba(0,0,0,.45)');
+  ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.lineCap = 'round'; ctx.lineWidth = lw;
+  ctx.strokeStyle = rgba(ink, 0.12); ctx.beginPath(); ctx.arc(cx, cy, ring, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = s.accent; ctx.beginPath(); ctx.arc(cx, cy, ring, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * sc.f); ctx.stroke();
+  const sub = sc.max ? `/${sc.max}` : '';
+  ctx.font = headFont(100);
+  const m = ctx.measureText(sc.text), asc = m.actualBoundingBoxAscent || 72;
+  const size = Math.min(r * (sub ? 0.58 : 0.72) * 100 / asc, r * 1.15 * 100 / m.width);
+  const bigAsc = asc * size / 100, subSize = r * 0.2;
+  const base = cy - (bigAsc + (sub ? subSize * 1.3 : 0)) / 2 + bigAsc;
+  ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = headFont(size);
+  ctx.fillText(sc.text, cx, base);
+  if (sub) {
+    ctx.font = uiFont(subSize, 700); ctx.fillStyle = rgba(ink, 0.6); ctx.textBaseline = 'top';
+    ctx.fillText(sub, cx, base + subSize * 0.3);
+  }
+  ctx.restore();
+}
+// Five stars filled to fraction f (to the nearest half star)
+function stars(g, x, y, h, f, align = 'left') {
+  const { ctx, s } = g;
+  const gap = h * 0.2, total = h * 5 + gap * 4, filled = Math.round(f * 10) / 2;
+  const sx = align === 'center' ? x - total / 2 : x;
+  ctx.save();
+  for (let i = 0; i < 5; i++) {
+    const cx = sx + h / 2 + i * (h + gap), cy = y + h * 0.55;
+    ctx.fillStyle = rgba(isLight(s.bg) ? '#000000' : '#FFFFFF', 0.22);
+    starPath(ctx, cx, cy, h / 2, 5, 0.48); ctx.fill();
+    const part = clamp(filled - i, 0, 1);
+    if (part > 0) {
+      ctx.save();
+      ctx.beginPath(); ctx.rect(cx - h / 2, y - h, h * part, h * 3); ctx.clip();
+      setShadow(g, h * 0.3, h * 0.06, 'rgba(0,0,0,.35)');
+      ctx.fillStyle = s.accent; starPath(ctx, cx, cy, h / 2, 5, 0.48); ctx.fill();
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+// Rising chart: faint bars, a glowing line that ends in an arrow, and a soft fill under it
+function growthChart(g, x, y, w, h) {
+  const { ctx, s } = g;
+  const vals = [0.1, 0.22, 0.17, 0.35, 0.29, 0.5, 0.45, 0.7, 0.95];
+  const n = vals.length, pts = vals.map((v, i) => [x + w * i / (n - 1), y + h * (1 - v)]);
+  const m = Math.min(w, h), lw = Math.max(2, m * 0.024);
+  const ink = isLight(s.bg) ? '#000000' : '#FFFFFF';
+  ctx.save();
+  ctx.strokeStyle = rgba(ink, 0.1); ctx.lineWidth = Math.max(1, m * 0.004);
+  ctx.beginPath();
+  for (let i = 0; i <= 4; i++) { const gy = y + h * i / 4; ctx.moveTo(x, gy); ctx.lineTo(x + w, gy); }
+  ctx.stroke();
+  const bw = w / (n - 1) * 0.42;
+  pts.forEach(([px, py], i) => {
+    ctx.fillStyle = rgba(s.accent, 0.1 + 0.2 * i / (n - 1));
+    rr(ctx, px - bw / 2, py, bw, y + h - py, bw * 0.2); ctx.fill();
+  });
+  const ag = ctx.createLinearGradient(0, y, 0, y + h);
+  ag.addColorStop(0, rgba(s.accent, 0.35)); ag.addColorStop(1, rgba(s.accent, 0));
+  ctx.fillStyle = ag;
+  ctx.beginPath(); ctx.moveTo(pts[0][0], y + h);
+  pts.forEach(([px, py]) => ctx.lineTo(px, py));
+  ctx.lineTo(pts[n - 1][0], y + h); ctx.closePath(); ctx.fill();
+  const [ax, ay] = pts[n - 1], [px0, py0] = pts[n - 2];
+  const ang = Math.atan2(ay - py0, ax - px0), head = lw * 3.4;
+  const hx = ax - Math.cos(ang) * head, hy = ay - Math.sin(ang) * head;
+  const nx = -Math.sin(ang) * head * 0.62, ny = Math.cos(ang) * head * 0.62;
+  setShadow(g, lw * 3, 0, rgba(s.accent, 0.8));
+  ctx.strokeStyle = s.accent; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  pts.slice(0, -1).forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+  ctx.lineTo(ax - Math.cos(ang) * head * 0.6, ay - Math.sin(ang) * head * 0.6); ctx.stroke();
+  ctx.fillStyle = s.accent;
+  ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(hx + nx, hy + ny); ctx.lineTo(hx - nx, hy - ny); ctx.closePath(); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = s.bg; ctx.lineWidth = lw * 0.7;
+  pts.slice(1, -1).forEach(([px, py]) => { ctx.beginPath(); ctx.arc(px, py, lw * 0.95, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+  ctx.restore();
+}
+// Map pin + uppercase place name (Vlog Camera)
+function locationTag(g, text, x, y, h, align = 'left') {
+  text = (text || '').trim().toUpperCase();
+  if (!text) return;
+  const { ctx, s } = g;
+  ctx.save();
+  const size = h * 0.6;
+  ctx.font = uiFont(size, 800);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${(size * 0.08).toFixed(2)}px`;
+  const pw = h * 0.7, gap = h * 0.28, tw = ctx.measureText(text).width;
+  const sx = align === 'center' ? x - (pw + gap + tw) / 2 : x;
+  setShadow(g, h * 0.4, h * 0.05, 'rgba(0,0,0,.6)');
+  const r = pw / 2, top = y + h * 0.04, pcx = sx + r;
+  ctx.fillStyle = s.accent;
+  ctx.beginPath(); ctx.arc(pcx, top + r, r, Math.PI * 0.8, Math.PI * 0.2); ctx.lineTo(pcx, y + h); ctx.closePath(); ctx.fill();
+  ctx.shadowColor = 'transparent';
+  ctx.fillStyle = inkOn(s.accent);
+  ctx.beginPath(); ctx.arc(pcx, top + r, r * 0.4, 0, Math.PI * 2); ctx.fill();
+  setShadow(g, h * 0.4, h * 0.05, 'rgba(0,0,0,.6)');
+  ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, sx + pw + gap, y + h / 2 + size * 0.05);
+  ctx.restore();
+}
+
 /* =========================================================
    Templates. Each adapts to landscape (YouTube/blog) and portrait (TikTok).
    Portrait layouts keep key content inside the middle 3:4 (TikTok profile grid).
@@ -1463,7 +1771,7 @@ const RENDER = {
     const dark = isLight(s.bg) ? s.text : s.bg, ink = isLight(s.bg) ? s.bg : s.text;
     const base = shade(dark, -0.45);
     ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
-    if (images.bg) { drawCover(ctx, images.bg, 0, 0, W, H, s.bgZoom, s.bgX, s.bgY); fillAll(g, rgba(base, clamp(s.overlay + 0.3, 0, 0.92))); }
+    if (images.bg) { drawPhoto(g, 0, 0, W, H); fillAll(g, rgba(base, clamp(s.overlay + 0.3, 0, 0.92))); }
     const R = Math.max(W, H);
     const blob = (x, y, r, c, a) => {
       const gr = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -1539,7 +1847,7 @@ const RENDER = {
       ctx.restore();
       ctx.save();
       rr(ctx, x, y, w, h, r); ctx.clip();
-      if (images.bg) drawCover(ctx, images.bg, x, y + bar, w, h - bar, s.bgZoom, s.bgX, s.bgY);
+      if (images.bg) drawPhoto(g, x, y + bar, w, h - bar);
       else mockPage(g, x, y + bar, w, h - bar);
       ctx.restore();
       const d = bar * 0.15;
@@ -1587,7 +1895,7 @@ const RENDER = {
       const b = w * 0.045, sx = x + b, sy = b, sw = w - b * 2, sh = h - b * 2;
       ctx.save();
       rr(ctx, sx, sy, sw, sh, r * 0.78); ctx.clip();
-      if (images.bg) drawCover(ctx, images.bg, sx, sy, sw, sh, s.bgZoom, s.bgX, s.bgY);
+      if (images.bg) drawPhoto(g, sx, sy, sw, sh);
       else mockApp(g, sx, sy, sw, sh);
       ctx.restore();
       ctx.fillStyle = '#0E0F13'; rr(ctx, -w * 0.15, sy + sh * 0.018, w * 0.3, w * 0.075, w * 0.0375); ctx.fill();
@@ -1607,8 +1915,206 @@ const RENDER = {
     }
   },
 
-  checklist(g) {
-    const { W, H, P, pad, s } = g;
+  laptop(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g, 0, 0, W, H, false);
+    // w is the width of the screen lid; the keyboard base under it is 14% wider
+    const device = (cx, top, w) => {
+      const lh = w * 0.64, b = w * 0.024, x = cx - w / 2;
+      ctx.save();
+      setShadow(g, w * 0.06, w * 0.025, 'rgba(0,0,0,.5)');
+      ctx.fillStyle = '#15171C'; rr(ctx, x, top, w, lh, w * 0.03); ctx.fill();
+      ctx.restore();
+      const sx = x + b, sy = top + b, sw = w - b * 2, sh = lh - b * 2.6;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(sx, sy, sw, sh); ctx.clip();
+      if (images.bg) drawPhoto(g, sx, sy, sw, sh); else mockPage(g, sx, sy, sw, sh);
+      ctx.restore();
+      ctx.fillStyle = '#30333B';
+      ctx.beginPath(); ctx.arc(cx, top + b / 2, b * 0.2, 0, Math.PI * 2); ctx.fill();
+      const bw = w * 1.14, bh = w * 0.045, bx = cx - bw / 2, by = top + lh - b * 0.2;
+      ctx.save();
+      setShadow(g, w * 0.04, w * 0.015, 'rgba(0,0,0,.45)');
+      const gr = ctx.createLinearGradient(0, by, 0, by + bh);
+      gr.addColorStop(0, '#E8EBF0'); gr.addColorStop(0.5, '#C2C7CF'); gr.addColorStop(1, '#8D929C');
+      ctx.fillStyle = gr;
+      ctx.beginPath();
+      ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by);
+      ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - bh * 1.6, by + bh);
+      ctx.lineTo(bx + bh * 1.6, by + bh);
+      ctx.quadraticCurveTo(bx, by + bh, bx, by);
+      ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; rr(ctx, cx - w * 0.09, by, w * 0.18, bh * 0.34, bh * 0.17); ctx.fill();
+    };
+    if (!P) {
+      const w = Math.min(W * 0.5, H * 0.8 / 0.685), cx = W - pad * 0.4 - w * 0.57;
+      device(cx, (H - w * 0.685) / 2 + H * 0.02, w);
+      cutout(g, W * 0.86, H, H * 0.72, W * 0.28);
+      const bH = hasBrand() ? H * 0.06 : 0, gap = H * 0.04;
+      stack(g, { x: pad, w: cx - w * 0.57 - pad * 1.8, top: pad, bottom: H - pad - (bH ? bH + gap : 0), u: H, maxSize: H * 0.22 });
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const { u, Y, Hh } = g;
+      device(W / 2, Y(0.47), Math.min(W * 0.86, Hh(0.37) / 0.685));
+      cutout(g, W * 0.78, Y(0.9), Hh(0.3), W * 0.45);
+      const bH = hasBrand() ? u * 0.065 : 0;
+      const r = stack(g, { x: pad, w: W - pad * 2, top: Y(0.14), bottom: Y(0.43), u, maxSize: u * 0.222, align: 'center', extraH: bH });
+      if (bH) brand(g, W / 2, r.extraY, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  code(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.1, 0, 0.95) : s.overlay * 0.3));
+    const { u, Y } = g;
+    const hasCut = !!images.cut;
+    // the editor is always dark, so the title uses whichever palette color is light
+    const dark = isLight(s.bg) ? s.text : s.bg, ink = isLight(s.bg) ? s.bg : s.text;
+    const win = P
+      ? { x: pad * 0.6, y: Y(0.13), w: W - pad * 1.2, h: Y(hasCut ? 0.6 : 0.87) - Y(0.13) }
+      : { x: W * 0.035, y: H * 0.06, w: W * (hasCut ? 0.64 : 0.93), h: H * 0.88 };
+    const r = u * 0.03, tb = u * 0.075, sb = hasBrand() ? u * 0.065 : u * 0.03;
+    ctx.save();
+    setShadow(g, u * 0.08, u * 0.025, 'rgba(0,0,0,.5)');
+    ctx.fillStyle = shade(dark, -0.25); rr(ctx, win.x, win.y, win.w, win.h, r); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = Math.max(1, u * 0.002); ctx.stroke();
+    rr(ctx, win.x, win.y, win.w, win.h, r); ctx.clip();
+    ctx.fillStyle = shade(dark, 0.07); ctx.fillRect(win.x, win.y, win.w, tb);
+    ctx.fillStyle = s.accent; ctx.fillRect(win.x, win.y + win.h - sb, win.w, sb);
+    ctx.restore();
+    // window buttons, and a file tab that shows the kicker
+    const d = tb * 0.12, dx = win.x + tb * 0.5;
+    ['#FF5F57', '#FEBC2E', '#28C840'].forEach((c, i) => {
+      ctx.fillStyle = c; ctx.beginPath(); ctx.arc(dx + d + i * d * 3.2, win.y + tb / 2, d, 0, Math.PI * 2); ctx.fill();
+    });
+    const kick = s.kicker.trim();
+    if (kick) {
+      const th = tb * 0.74, ty = win.y + tb - th, tx = dx + d * 10, fs = th * 0.42, rt = th * 0.22;
+      ctx.save();
+      ctx.font = uiFont(fs, 600);
+      const tw = Math.min(ctx.measureText(kick).width, win.w - (tx - win.x) - th * 2.2), w = tw + th * 1.5;
+      ctx.fillStyle = shade(dark, -0.25);
+      ctx.beginPath();
+      ctx.moveTo(tx, ty + th); ctx.lineTo(tx, ty + rt); ctx.arcTo(tx, ty, tx + rt, ty, rt);
+      ctx.lineTo(tx + w - rt, ty); ctx.arcTo(tx + w, ty, tx + w, ty + rt, rt); ctx.lineTo(tx + w, ty + th);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = s.accent; rr(ctx, tx + th * 0.38, ty + th * 0.34, th * 0.28, th * 0.34, th * 0.06); ctx.fill();
+      ctx.fillStyle = rgba(ink, 0.85); ctx.textBaseline = 'middle';
+      ctx.fillText(kick, tx + th * 0.95, ty + th / 2 + fs * 0.05, tw);
+      ctx.restore();
+    }
+    // body: line numbers, made-up code around the title, and a cursor after it
+    const gw = u * 0.07, bx = win.x + gw + u * 0.035, bw = win.x + win.w - bx - u * 0.05;
+    const y0 = win.y + tb, y1 = win.y + win.h - sb, step = u * 0.058;
+    const c2 = rotateHue(s.accent, 150), dim = rgba(ink, 0.25), mid = rgba(ink, 0.6);
+    const CODE = [
+      [[0.05, dim], [0.3, dim]],
+      [[0.1, c2], [0.14, mid], [0.03, dim], [0.22, s.accent]],
+      [],
+      [[0.05, dim], [0.12, c2], [0.2, mid]],
+      [[0.05, dim], [0.08, s.accent], [0.16, mid], [0.06, c2]],
+      [[0.1, c2], [0.18, dim]],
+    ];
+    const tTop = y0 + step * 2.7, tBot = y1 - step * 1.7;
+    const L = measureTitle(g, bw - u * 0.05, tBot - tTop, u * 0.2);
+    const ty = tTop + (tBot - tTop - L.h) / 2;
+    let n = 1;
+    const row = (yy, parts) => {
+      ctx.fillStyle = rgba(ink, 0.3); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.font = monoFont(step * 0.42);
+      ctx.fillText(String(n++), win.x + gw, yy);
+      let xx = bx;
+      parts.forEach(([f, c]) => { ctx.fillStyle = c; rr(ctx, xx, yy - step * 0.16, bw * f, step * 0.32, step * 0.16); ctx.fill(); xx += bw * f + step * 0.3; });
+    };
+    ctx.save();
+    const above = Math.floor((ty - y0 - step * 0.35) / step), below = Math.floor((y1 - ty - L.h - step * 0.35) / step);
+    for (let i = 0; i < above; i++) row(y0 + step * (i + 0.85), CODE[i % CODE.length]);
+    L.lines.forEach((_, i) => row(ty + (i + 0.5) * L.size * L.lh, []));
+    for (let i = 0; i < below; i++) row(ty + L.h + step * (i + 0.6), CODE[(i + 3) % CODE.length]);
+    ctx.restore();
+    drawLines(g, L, bx, ty, 'left', { color: ink });
+    if (L.lines.length) {
+      ctx.save();
+      ctx.font = headFont(L.size);
+      const capH = ctx.measureText('H').actualBoundingBoxAscent || L.size * 0.72;
+      const lineH = L.size * L.lh, last = L.lines[L.lines.length - 1];
+      const base = ty + (L.lines.length - 1) * lineH + (lineH + capH) / 2;
+      ctx.fillStyle = s.accent;
+      ctx.fillRect(bx + last.w + L.size * 0.12, base - capH, Math.max(2, L.size * 0.11), capH);
+      ctx.restore();
+    }
+    if (hasBrand()) brand(g, win.x + gw * 0.5, y1 + sb * 0.18, sb * 0.64, { color: inkOn(s.accent) });
+    if (hasCut) {
+      if (P) cutout(g, W / 2, H, H - Y(0.55), W * 0.9);
+      else cutout(g, W * 0.82, H, H * 0.94, W * 0.36);
+    }
+  },
+
+  error(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.15, 0, 0.95) : s.overlay * 0.3));
+    const RED = '#E5484D', CYAN = '#2EE6F0';
+    // glitch streaks
+    [[0.08, 0.012, 0.52, 0.42], [0.115, 0.004, 0.6, 0.3], [0.3, 0.007, 0, 0.26], [0.5, 0.014, 0.72, 0.28],
+      [0.545, 0.004, 0.04, 0.22], [0.77, 0.009, 0.38, 0.46], [0.805, 0.004, 0, 0.3], [0.92, 0.011, 0.58, 0.42]]
+      .forEach(([fy, fh, fx, fw], i) => { ctx.fillStyle = rgba(i % 2 ? CYAN : RED, 0.3); ctx.fillRect(W * fx, H * fy, W * fw, Math.max(2, H * fh)); });
+    const { u, Y } = g;
+    const hasCut = !!images.cut;
+    const body = isLight(s.bg) ? '#FFFFFF' : shade(s.bg, 0.05);
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.04;
+    // red title bar with the error label, then the title (plus a big warning sign when icon is true)
+    const dialog = (x, w, top, bottom, icon) => {
+      const hb = u * 0.085, bp = u * 0.05, ic = icon ? u * 0.15 : 0, r = u * 0.03;
+      const L = measureTitle(g, w - bp * 2 - (ic ? ic + bp * 0.7 : 0), bottom - top - hb - bp * 2, u * 0.2);
+      const bodyH = Math.max(L.h, ic) + bp * 2, h = hb + bodyH, y = top + (bottom - top - h) / 2;
+      ctx.save();
+      const glow = ctx.createRadialGradient(x + w / 2, y + h / 2, 0, x + w / 2, y + h / 2, Math.max(w, h) * 0.75);
+      glow.addColorStop(0, rgba(RED, 0.35)); glow.addColorStop(1, rgba(RED, 0));
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+      setShadow(g, u * 0.08, u * 0.025, 'rgba(0,0,0,.5)');
+      ctx.fillStyle = body; rr(ctx, x, y, w, h, r); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      rr(ctx, x, y, w, h, r); ctx.clip();
+      ctx.fillStyle = RED; ctx.fillRect(x, y, w, hb);
+      ctx.restore();
+      warnIcon(g, x + hb * 0.55, y + hb / 2, hb * 0.46, '#FFFFFF', RED);
+      const label = s.kicker.trim().toUpperCase();
+      ctx.save();
+      if (label) {
+        const fs = hb * 0.4;
+        ctx.font = uiFont(fs, 800);
+        if ('letterSpacing' in ctx) ctx.letterSpacing = `${(fs * 0.06).toFixed(2)}px`;
+        ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle';
+        ctx.fillText(label, x + hb, y + hb / 2 + fs * 0.05, w - hb * 2.2);
+      }
+      const cx = x + w - hb * 0.55, cy = y + hb / 2, a = hb * 0.15;
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = hb * 0.07; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(cx - a, cy - a); ctx.lineTo(cx + a, cy + a); ctx.moveTo(cx + a, cy - a); ctx.lineTo(cx - a, cy + a); ctx.stroke();
+      ctx.restore();
+      const by = y + hb + bp;
+      if (ic) warnIcon(g, x + bp + ic / 2, by + (bodyH - bp * 2) / 2, ic, RED, body);
+      drawLines(g, L, x + bp + (ic ? ic + bp * 0.7 : 0), by + (bodyH - bp * 2 - L.h) / 2, 'left');
+      return y + h;
+    };
+    if (!P) {
+      const w = hasCut ? W * 0.62 - pad : W * 0.78, x = hasCut ? pad : (W - w) / 2;
+      dialog(x, w, pad, H - pad - (bH ? bH + gap : 0), true);
+      if (hasCut) cutout(g, W * 0.81, H, H * 0.95, W * 0.38);
+      if (bH) brand(g, hasCut ? pad : W / 2, H - pad - bH, bH, { align: hasCut ? 'left' : 'center', shadow: true });
+    } else {
+      const end = dialog(pad * 0.7, W - pad * 1.4, Y(0.14), Y(hasCut ? 0.56 : 0.85) - (bH ? bH + gap : 0), false);
+      if (hasCut) cutout(g, W / 2, H, H - Y(0.58), W * 0.9);
+      if (bH) brand(g, W / 2, end + gap, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  // numbered: Steps template (numbered circles joined by a line instead of ✓)
+  checklist(g, numbered = false) {
+    const { ctx, W, H, P, pad, s } = g;
     paintBackground(g);
     if (images.bg) fillAll(g, rgba(s.bg, clamp(s.overlay + 0.3, 0, 0.94)));
     const lines = String(s.title).split('\n').map(t => t.trim()).filter(Boolean);
@@ -1630,13 +2136,22 @@ const RENDER = {
     if (kH) { pill(g, s.kicker, x, y, kH, { maxW: w }); y += kH + gap; }
     drawLines(g, Lh, x, y, 'left');
     y += Lh.h + gap * 1.2;
+    if (numbered && Ls.length > 1) {
+      ctx.save();
+      ctx.strokeStyle = rgba(s.accent, 0.55); ctx.lineWidth = Math.max(2, ih * 0.06);
+      ctx.beginPath(); ctx.moveTo(x + ih * 0.36, y + ih / 2); ctx.lineTo(x + ih * 0.36, y + (Ls.length - 0.5) * ih); ctx.stroke();
+      ctx.restore();
+    }
     Ls.forEach((L, i) => {
       const cy = y + i * ih + ih / 2;
-      checkIcon(g, x + ih * 0.36, cy, ih * 0.34);
+      if (numbered) stepIcon(g, x + ih * 0.36, cy, ih * 0.34, i + 1);
+      else checkIcon(g, x + ih * 0.36, cy, ih * 0.34);
       drawLines(g, L, x + ih * 1.0, cy - L.h / 2, 'left', { hlStyle: s.hlStyle === 'box' || s.hlStyle === 'brush' ? 'color' : s.hlStyle });
     });
     if (bH) brand(g, pad, bottom - bH, bH, { shadow: true });
   },
+
+  steps(g) { RENDER.checklist(g, true); },
 
   promo(g) {
     const { ctx, W, H, P, pad, s } = g;
@@ -1800,6 +2315,957 @@ const RENDER = {
     if (hasBrand()) brand(g, pad, ty + lay.tkH * 0.2, lay.tkH * 0.6);
   },
 
+  review(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.2, 0, 0.95) : s.overlay * 0.4));
+    const sc = parseScore(s.number);
+    const hasCut = !!images.cut;
+    const { u, Y, Hh } = g;
+    const starH = sc.max ? u * 0.065 : 0;
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.04;
+    // spotlight and a round podium for the product
+    const podium = (cx, cy, rx) => {
+      const ry = rx * 0.18, side = rx * 0.12;
+      const sp = ctx.createRadialGradient(cx, cy - rx, 0, cx, cy - rx, rx * 1.6);
+      sp.addColorStop(0, rgba(s.accent, 0.38)); sp.addColorStop(1, rgba(s.accent, 0));
+      ctx.fillStyle = sp; ctx.fillRect(0, 0, W, H);
+      const base = isLight(s.bg) ? shade(s.bg, -0.1) : shade(s.bg, 0.14);
+      ctx.save();
+      setShadow(g, rx * 0.15, rx * 0.04, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = shade(base, -0.25);
+      ctx.beginPath(); ctx.ellipse(cx, cy + side, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.fillRect(cx - rx, cy, rx * 2, side);
+      ctx.fillStyle = base;
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = s.accent; ctx.lineWidth = Math.max(2, rx * 0.025); ctx.stroke();
+      ctx.restore();
+    };
+    if (!P) {
+      if (hasCut) {
+        podium(W * 0.72, H * 0.86, W * 0.17);
+        cutout(g, W * 0.72, H * 0.88, H * 0.74, W * 0.34);
+        scoreRing(g, W * 0.885, H * 0.25, H * 0.15, sc);
+      } else scoreRing(g, W * 0.76, H * 0.5, Math.min(H * 0.3, W * 0.17), sc);
+      const colW = (hasCut ? W * 0.5 : W * 0.56) - pad;
+      const r = stack(g, { x: pad, w: colW, top: pad, bottom: H - pad - (bH ? bH + gap : 0), u: H, maxSize: H * 0.2, extraH: starH });
+      if (starH) stars(g, pad, r.extraY, starH, sc.f);
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const extraH = starH + (bH ? (starH ? gap : 0) + bH : 0);
+      let r;
+      if (hasCut) {
+        podium(W / 2, Y(0.83), W * 0.34);
+        cutout(g, W / 2, Y(0.85), Hh(0.33), W * 0.75);
+        scoreRing(g, W * 0.79, Y(0.56), u * 0.12, sc);
+        r = stack(g, { x: pad, w: W - pad * 2, top: Y(0.14), bottom: Y(0.46), u, maxSize: u * 0.2, align: 'center', extraH });
+      } else {
+        scoreRing(g, W / 2, Y(0.31), u * 0.2, sc);
+        r = stack(g, { x: pad, w: W - pad * 2, top: Y(0.5), bottom: Y(0.85), u, maxSize: u * 0.2, align: 'center', extraH });
+      }
+      let y = r.extraY;
+      if (starH) { stars(g, W / 2, y, starH, sc.f, 'center'); y += starH + gap; }
+      if (bH) brand(g, W / 2, y, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  growth(g) {
+    const { W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.2, 0, 0.95) : s.overlay * 0.3));
+    const num = (s.number || '').trim();
+    const hasCut = !!images.cut;
+    const { u, Y, Hh } = g;
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.035;
+    // kicker, big number (accent color) and title as one block, centered in [top, bottom]. Returns its bottom.
+    const block = (x, w, top, bottom, align, maxSize) => {
+      const kH = s.kicker.trim() ? u * 0.07 : 0;
+      const avail = bottom - top - (kH ? kH + gap : 0);
+      const N = num ? measureText(g, num, w, avail * 0.42, u * 0.3, false) : null;
+      const L = measureTitle(g, w, avail - (N ? N.h + gap * 0.5 : 0), maxSize);
+      let y = top + (avail - (N ? N.h + gap * 0.5 : 0) - L.h) / 2;
+      const ax = align === 'center' ? x + w / 2 : x;
+      if (kH) { pill(g, s.kicker, ax, y, kH, { align, maxW: w }); y += kH + gap; }
+      if (N) { drawLines(g, N, ax, y, align, { color: s.accent, hlStyle: 'color' }); y += N.h + gap * 0.5; }
+      drawLines(g, L, ax, y, align);
+      return y + L.h;
+    };
+    if (!P) {
+      growthChart(g, W * 0.53, H * 0.2, W * 0.47 - pad * 1.2, H * 0.62);
+      if (hasCut) cutout(g, W * 0.8, H, H * 0.9, W * 0.36);
+      block(pad, W * 0.47 - pad, pad, H - pad - (bH ? bH + gap : 0), 'left', H * 0.2);
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      growthChart(g, pad, Y(0.53), W - pad * 2, Hh(0.27));
+      if (hasCut) cutout(g, W * 0.7, H, H - Y(0.55), W * 0.7);
+      const end = block(pad, W - pad * 2, Y(0.13), Y(0.48) - (bH ? bH + gap : 0), 'center', u * 0.2);
+      if (bH) brand(g, W / 2, end + gap, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  gaming(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? s.overlay * 0.6 : s.overlay * 0.3));
+    const { u, Y } = g;
+    const hasCut = !!images.cut, R = Math.max(W, H);
+    // halftone dots, biggest in the top-left corner
+    ctx.save();
+    ctx.fillStyle = rgba(s.accent, 0.3);
+    const step = R * 0.022, reach = R * 0.42;
+    ctx.beginPath();
+    for (let yy = step / 2; yy < reach; yy += step)
+      for (let xx = step / 2; xx < reach; xx += step) {
+        const r = step * 0.45 * (1 - Math.hypot(xx, yy) / reach);
+        if (r > step * 0.04) { ctx.moveTo(xx + r, yy); ctx.arc(xx, yy, r, 0, Math.PI * 2); }
+      }
+    ctx.fill();
+    ctx.restore();
+    // slanted stripes behind the player, then a glow
+    const band = (x, w, c, sk, y0) => { ctx.fillStyle = c; poly(ctx, [[x + sk, y0], [x + sk + w, y0], [x - sk + w, H], [x - sk, H]]); };
+    const glow = (cx, cy, r) => {
+      const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gr.addColorStop(0, rgba(s.accent, 0.45)); gr.addColorStop(1, rgba(s.accent, 0));
+      ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+    };
+    const a2 = rotateHue(s.accent, -45), white = 'rgba(255,255,255,.55)';
+    // the title leans forward like italic type
+    const lean = (cy, fn) => { ctx.save(); ctx.transform(1, 0, -0.12, 1, 0.12 * cy, 0); fn(); ctx.restore(); };
+    if (!P) {
+      const sk = H * 0.2;
+      band(W * 0.62, W * 0.15, s.accent, sk, 0); band(W * 0.8, W * 0.035, a2, sk, 0); band(W * 0.57, W * 0.012, white, sk, 0);
+      if (hasCut) { glow(W * 0.76, H * 0.55, H * 0.6); cutout(g, W * 0.76, H, H * 0.98, W * 0.46); }
+      const bH = hasBrand() ? H * 0.06 : 0, gap = H * 0.04;
+      const top = pad, bottom = H - pad - (bH ? bH + gap : 0), sl = 0.06 * (bottom - top);
+      lean((top + bottom) / 2, () => stack(g, { x: pad + sl, w: (hasCut ? W * 0.56 : W * 0.6) - pad - sl * 2, top, bottom, u: H, maxSize: H * 0.24 }));
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const y0 = Y(hasCut ? 0.46 : 0.66), sk = (H - y0) * 0.2;
+      band(W * 0.3, W * 0.3, s.accent, sk, y0); band(W * 0.66, W * 0.06, a2, sk, y0); band(W * 0.22, W * 0.02, white, sk, y0);
+      if (hasCut) { glow(W / 2, Y(0.72), W * 0.6); cutout(g, W / 2, H, H - Y(0.47), W * 0.95); }
+      const bH = hasBrand() ? u * 0.065 : 0;
+      const top = Y(hasCut ? 0.14 : 0.2), bottom = Y(hasCut ? 0.43 : 0.62), sl = 0.06 * (bottom - top);
+      let r;
+      lean((top + bottom) / 2, () => { r = stack(g, { x: pad + sl, w: W - pad * 2 - sl * 2, top, bottom, u, maxSize: u * 0.222, align: 'center', extraH: bH }); });
+      if (bH) brand(g, W / 2, r.extraY, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  vlog(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, s.overlay * 0.25));
+    const { u, Y } = g;
+    const hasCut = !!images.cut, m = Math.min(W, H);
+    const titleTop = P && hasCut;      // tall sizes with a cut-out put the title at the top
+    const a = 0.25 + s.overlay * 0.45;
+    const sh = ctx.createLinearGradient(0, 0, 0, H);
+    sh.addColorStop(0, `rgba(0,0,0,${titleTop ? a : 0.25})`); sh.addColorStop(0.4, 'rgba(0,0,0,0)');
+    sh.addColorStop(0.6, 'rgba(0,0,0,0)'); sh.addColorStop(1, `rgba(0,0,0,${titleTop ? 0.25 : a})`);
+    ctx.fillStyle = sh; ctx.fillRect(0, 0, W, H);
+    if (hasCut) { if (P) cutout(g, W / 2, H, H - Y(0.5), W * 0.95); else cutout(g, W * 0.78, H, H * 0.92, W * 0.4); }
+    // viewfinder: corner marks, REC, timecode and battery
+    const f = P ? { x0: pad * 0.55, y0: Y(0.13), x1: W - pad * 0.55, y1: Y(0.87) } : { x0: W * 0.035, y0: H * 0.06, x1: W * 0.965, y1: H * 0.94 };
+    const len = m * 0.075, lw = Math.max(2, m * 0.008), hs = m * 0.042;
+    ctx.save();
+    setShadow(g, lw * 2, 0, 'rgba(0,0,0,.5)');
+    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = lw; ctx.lineCap = 'square';
+    ctx.beginPath();
+    [[f.x0, f.y0, 1, 1], [f.x1, f.y0, -1, 1], [f.x0, f.y1, 1, -1], [f.x1, f.y1, -1, -1]].forEach(([x, y, dx, dy]) => {
+      ctx.moveTo(x, y + dy * len); ctx.lineTo(x, y); ctx.lineTo(x + dx * len, y);
+    });
+    ctx.stroke();
+    const ix = f.x0 + len * 0.45, iy = f.y0 + len * 0.45;
+    ctx.fillStyle = '#FF3B30'; ctx.beginPath(); ctx.arc(ix + hs * 0.4, iy + hs / 2, hs * 0.36, 0, Math.PI * 2); ctx.fill();
+    ctx.font = uiFont(hs * 0.82, 800); ctx.fillStyle = '#FFFFFF'; ctx.textBaseline = 'middle';
+    ctx.fillText('REC', ix + hs * 1.05, iy + hs / 2 + hs * 0.04);
+    const bw = hs * 1.25, bh = hs * 0.6, bx = f.x1 - len * 0.45 - bw - hs * 0.12, by = iy + (hs - bh) / 2;
+    ctx.lineWidth = Math.max(1, hs * 0.08);
+    rr(ctx, bx, by, bw, bh, bh * 0.2); ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = '#FFFFFF';
+    rr(ctx, bx + bw, by + bh * 0.3, hs * 0.12, bh * 0.4, hs * 0.04); ctx.fill();
+    rr(ctx, bx + hs * 0.12, by + hs * 0.12, (bw - hs * 0.24) * 0.7, bh - hs * 0.24, bh * 0.1); ctx.fill();
+    setShadow(g, lw * 2, 0, 'rgba(0,0,0,.5)');
+    ctx.font = monoFont(hs * 0.78, 700);
+    ctx.textAlign = 'right';
+    ctx.fillText('00:12:34', bx - hs * 0.5, iy + hs / 2 + hs * 0.04);
+    ctx.restore();
+    // location (kicker) and title
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.035, kH = s.kicker.trim() ? u * 0.06 : 0;
+    const inset = m * 0.05;
+    if (!P) {
+      const x = f.x0 + inset, w = (hasCut ? W * 0.6 : W * 0.8) - x;
+      const bottom = f.y1 - inset - (bH ? bH + gap : 0);
+      const L = measureTitle(g, w, bottom - H * 0.3 - (kH ? kH + gap : 0), H * 0.2);
+      const y = bottom - L.h;
+      if (kH) locationTag(g, s.kicker, x, y - gap - kH, kH);
+      drawLines(g, L, x, y, 'left');
+      if (bH) brand(g, x, f.y1 - inset - bH, bH, { shadow: true });
+    } else if (titleTop) {
+      const top = Y(0.2), bottom = Y(0.44);
+      const L = measureTitle(g, W - pad * 2, bottom - top - (kH ? kH + gap : 0) - (bH ? bH + gap : 0), u * 0.2);
+      let y = top + (bottom - top - ((kH ? kH + gap : 0) + L.h + (bH ? bH + gap : 0))) / 2;
+      if (kH) { locationTag(g, s.kicker, W / 2, y, kH, 'center'); y += kH + gap; }
+      drawLines(g, L, W / 2, y, 'center');
+      if (bH) brand(g, W / 2, y + L.h + gap, bH, { align: 'center', shadow: true });
+    } else {
+      const bottom = Y(0.83) - (bH ? bH + gap : 0);
+      const L = measureTitle(g, W - pad * 2, bottom - Y(0.45) - (kH ? kH + gap : 0), u * 0.2);
+      const y = bottom - L.h;
+      if (kH) locationTag(g, s.kicker, pad, y - gap - kH, kH);
+      drawLines(g, L, pad, y, 'left');
+      if (bH) brand(g, pad, Y(0.83) - bH, bH, { shadow: true });
+    }
+  },
+
+  chalk(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    const { u, Y } = g;
+    const hasCut = !!images.cut, m = Math.min(W, H), fw = Math.round(m * 0.035), tray = fw * 1.4;
+    let seed = 11;
+    const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+    // wooden frame, then the board with eraser smudges and chalk dust
+    const wood = ctx.createLinearGradient(0, 0, W, H);
+    wood.addColorStop(0, '#9A6A3A'); wood.addColorStop(1, '#5C3A1C');
+    ctx.fillStyle = wood; ctx.fillRect(0, 0, W, H);
+    const board = isLight(s.bg) ? '#24402F' : mix(s.bg, '#24402F', 0.65);
+    const bx = fw, by = fw, bw = W - fw * 2, bh = H - fw * 2;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
+    ctx.fillStyle = board; ctx.fillRect(bx, by, bw, bh);
+    for (let i = 0; i < 12; i++) {
+      const x = bx + rnd() * bw, y = by + rnd() * bh, r = m * (0.15 + rnd() * 0.3);
+      const gr = ctx.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, `rgba(255,255,255,${(0.03 + rnd() * 0.04).toFixed(3)})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = gr; ctx.fillRect(bx, by, bw, bh);
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.08)';
+    ctx.beginPath();
+    for (let i = 0; i < 260; i++) {
+      const x = bx + rnd() * bw, y = by + rnd() * bh, r = Math.max(0.6, m * 0.002 * rnd());
+      ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2);
+    }
+    ctx.fill();
+    const vg = ctx.createRadialGradient(W / 2, H / 2, m * 0.3, W / 2, H / 2, Math.max(W, H) * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.35)');
+    ctx.fillStyle = vg; ctx.fillRect(bx, by, bw, bh);
+    ctx.restore();
+    ctx.strokeStyle = 'rgba(0,0,0,.4)'; ctx.lineWidth = Math.max(1, fw * 0.15); ctx.strokeRect(bx, by, bw, bh);
+    const chalkInk = '#F4F1E8', chalkAcc = lum(s.accent) > 0.15 ? s.accent : '#FFE66D';
+    // faint doodles, like half-erased chalk
+    ctx.save();
+    ctx.strokeStyle = ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.lineWidth = Math.max(1.5, m * 0.004); ctx.lineCap = 'round';
+    ctx.font = handFont(m * 0.045);
+    if (!P) { ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.fillText('a² + b² = c²', bx + bw - m * 0.05, by + m * 0.04); }
+    else if (!hasCut) { ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.fillText('a² + b² = c²', W - pad, Y(0.885)); }
+    if (!P && !hasCut) {
+      const tx = bx + bw - m * 0.3, ty = by + bh - tray - m * 0.08, ts = m * 0.16;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + ts, ty); ctx.lineTo(tx, ty - ts * 0.8); ctx.closePath(); ctx.stroke();
+      ctx.strokeRect(tx, ty - ts * 0.12, ts * 0.12, ts * 0.12);
+    }
+    ctx.restore();
+    // chalk ledge with two sticks of chalk
+    ctx.save();
+    setShadow(g, fw * 0.6, -fw * 0.1, 'rgba(0,0,0,.4)');
+    const lg = ctx.createLinearGradient(0, H - tray, 0, H);
+    lg.addColorStop(0, '#A87543'); lg.addColorStop(1, '#6B4522');
+    ctx.fillStyle = lg; ctx.fillRect(0, H - tray, W, tray);
+    ctx.shadowColor = 'transparent';
+    ctx.fillStyle = chalkInk; rr(ctx, W * 0.14, H - tray - fw * 0.42, m * 0.09, fw * 0.42, fw * 0.2); ctx.fill();
+    ctx.fillStyle = chalkAcc; rr(ctx, W * 0.14 + m * 0.11, H - tray - fw * 0.4, m * 0.06, fw * 0.4, fw * 0.2); ctx.fill();
+    ctx.restore();
+    // the lesson label in handwriting with a wavy underline
+    const lesson = (x, y, h, maxW) => {
+      const t = s.kicker.trim();
+      ctx.save();
+      ctx.font = handFont(h * 0.8);
+      const tw = Math.min(ctx.measureText(t).width, maxW);
+      ctx.fillStyle = chalkAcc; ctx.textBaseline = 'middle';
+      ctx.fillText(t, x, y + h * 0.42, maxW);
+      ctx.strokeStyle = chalkAcc; ctx.lineWidth = Math.max(1.5, h * 0.07); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x, y + h * 0.95);
+      for (let i = 1; i <= 8; i++) ctx.quadraticCurveTo(x + tw * (i - 0.5) / 8, y + h * (i % 2 ? 0.85 : 1.05), x + tw * i / 8, y + h * 0.95);
+      ctx.stroke();
+      ctx.restore();
+    };
+    // board-colored specks over the title make it look like chalk
+    const grain = (x, y, w, h, size) => {
+      ctx.save();
+      ctx.fillStyle = rgba(board, 0.45);
+      ctx.beginPath();
+      const n = Math.min(3000, Math.round(w * h / (size * size) * 40));
+      for (let i = 0; i < n; i++) {
+        const gx = x + rnd() * w, gy = y + rnd() * h, r = size * (0.006 + rnd() * 0.014);
+        ctx.moveTo(gx + r, gy); ctx.arc(gx, gy, r, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      ctx.restore();
+    };
+    const bH = hasBrand() ? u * 0.055 : 0, gap = u * 0.035, kH = s.kicker.trim() ? u * 0.085 : 0;
+    const opt = { color: chalkInk, accent: chalkAcc, effect: 'none' };
+    const write = (x, w, top, bottom) => {
+      const L = measureTitle(g, w, bottom - top - (kH ? kH + gap : 0), u * 0.2);
+      let y = top + (bottom - top - ((kH ? kH + gap : 0) + L.h)) / 2;
+      if (kH) { lesson(x, y, kH, w); y += kH + gap; }
+      drawLines(g, L, x, y, 'left', opt);
+      grain(x - L.size * 0.1, y, L.maxLineW + L.size * 0.2, L.h, L.size);
+      return y + L.h;
+    };
+    if (!P) {
+      const x = bx + pad * 0.8;
+      write(x, (hasCut ? W * 0.6 : W * 0.84) - x, by + pad * 0.6, H - tray - pad * 0.5 - (bH ? bH + gap : 0));
+      if (bH) brand(g, x, H - tray - pad * 0.5 - bH, bH, { color: chalkInk });
+      if (hasCut) cutout(g, W * 0.8, H, H * 0.92, W * 0.38);
+    } else {
+      const end = write(pad, W - pad * 2, Y(0.15), Y(hasCut ? 0.55 : 0.82) - (bH ? bH + gap : 0));
+      if (bH) brand(g, pad, end + gap, bH, { color: chalkInk });
+      if (hasCut) cutout(g, W / 2, H, H - Y(0.57), W * 0.9);
+    }
+  },
+
+  tier(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.25, 0, 0.95) : s.overlay * 0.3));
+    const { u, Y } = g;
+    const TIERS = [['S', '#FF7F7F', 2], ['A', '#FFBF7F', 4], ['B', '#FFDF7F', 3], ['C', '#FFFF7F', 3], ['D', '#BFFF7F', 1]];
+    // the classic tier chart; the first S-tier tile shows your background photo
+    const chart = (x, y, w, h) => {
+      const gap = h * 0.014, rh = (h - gap * (TIERS.length + 1)) / TIERS.length, r = rh * 0.1;
+      ctx.save();
+      setShadow(g, h * 0.05, h * 0.015, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = isLight(s.bg) ? '#FFFFFF' : shade(s.bg, -0.45);
+      rr(ctx, x, y, w, h, r * 1.6); ctx.fill();
+      ctx.restore();
+      TIERS.forEach(([t, c, n], i) => {
+        const ry = y + gap + i * (rh + gap), lx = x + gap, lw = rh * 1.1;
+        ctx.fillStyle = c; rr(ctx, lx, ry, lw, rh, r); ctx.fill();
+        ctx.save();
+        ctx.fillStyle = '#1A1A1A'; ctx.font = headFont(rh * 0.62); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(t, lx + lw / 2, ry + rh / 2 + rh * 0.04);
+        ctx.restore();
+        const ts = rh * 0.84, tg = rh * 0.12;
+        for (let j = 0; j < n; j++) {
+          const tx = lx + lw + tg + j * (ts + tg), ty = ry + (rh - ts) / 2;
+          if (tx + ts > x + w - gap) break;
+          if (i || j) {
+            ctx.fillStyle = rgba(rotateHue(s.accent, 40 + (i * 3 + j) * 47), 0.32);
+            rr(ctx, tx, ty, ts, ts, r); ctx.fill();
+            continue;
+          }
+          ctx.save();
+          setShadow(g, ts * 0.15, ts * 0.04, 'rgba(0,0,0,.35)');
+          ctx.fillStyle = s.accent; rr(ctx, tx - ts * 0.06, ty - ts * 0.06, ts * 1.12, ts * 1.12, r * 1.3); ctx.fill();
+          ctx.shadowColor = 'transparent';
+          rr(ctx, tx, ty, ts, ts, r); ctx.clip();
+          if (images.bg) drawCover(ctx, images.bg, tx, ty, ts, ts);
+          else {
+            ctx.fillStyle = inkOn(s.accent); ctx.font = headFont(ts * 0.6); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('?', tx + ts / 2, ty + ts / 2 + ts * 0.04);
+          }
+          ctx.restore();
+        }
+      });
+    };
+    if (!P) {
+      const cx = W * 0.46, bH = hasBrand() ? H * 0.06 : 0, gap = H * 0.04;
+      chart(cx, pad * 0.8, W - pad * 0.6 - cx, H - pad * 1.6);
+      if (images.cut) cutout(g, W * 0.87, H, H * 0.78, W * 0.28);
+      stack(g, { x: pad, w: cx - pad * 1.8, top: pad, bottom: H - pad - (bH ? bH + gap : 0), u: H, maxSize: H * 0.22 });
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const bH = hasBrand() ? u * 0.065 : 0;
+      chart(pad * 0.7, Y(0.45), W - pad * 1.4, Y(0.86) - Y(0.45));
+      if (images.cut) cutout(g, W * 0.8, H, H - Y(0.64), W * 0.42);
+      const r = stack(g, { x: pad, w: W - pad * 2, top: Y(0.14), bottom: Y(0.42), u, maxSize: u * 0.222, align: 'center', extraH: bH });
+      if (bH) brand(g, W / 2, r.extraY, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  beforeafter(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    const { u, Y } = g;
+    const after = images.cut2;
+    const A = P ? [0, 0, W, H / 2] : [0, 0, W / 2, H], B = P ? [0, H / 2, W, H / 2] : [W / 2, 0, W / 2, H];
+    const inside = (r, fn) => { ctx.save(); ctx.beginPath(); ctx.rect(...r); ctx.clip(); fn(); ctx.restore(); };
+    if (after) {
+      inside(A, () => paintBackground(g, ...A));
+      drawCover(ctx, after, ...B);
+    } else {
+      // one photo runs across both halves, in gray on the before side
+      paintBackground(g);
+      inside(A, () => {
+        ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#808080'; ctx.fillRect(...A);
+        ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(...A);
+      });
+    }
+    const sh = ctx.createLinearGradient(0, H * (P ? 0.55 : 0.45), 0, H);
+    sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, `rgba(0,0,0,${(0.3 + s.overlay * 0.45).toFixed(2)})`);
+    ctx.fillStyle = sh; ctx.fillRect(0, 0, W, H);
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.035;
+    const L = P ? measureTitle(g, W - pad * 2, Y(0.85) - (bH ? bH + gap : 0) - Y(0.6), u * 0.2) : measureTitle(g, W - pad * 2, H * 0.3, H * 0.17);
+    const tBottom = P ? Y(0.85) - (bH ? bH + gap : 0) : H - pad - (bH ? bH + gap : 0);
+    // divider with a slider handle; on wide sizes it stops above the title
+    const m = Math.min(W, H), lw = Math.max(3, m * 0.012), hr = m * 0.065, hy = P ? H / 2 : H * 0.4;
+    ctx.save();
+    setShadow(g, m * 0.03, 0, 'rgba(0,0,0,.5)');
+    ctx.fillStyle = '#FFFFFF';
+    if (P) ctx.fillRect(0, H / 2 - lw / 2, W, lw); else ctx.fillRect(W / 2 - lw / 2, 0, lw, Math.max(hy, tBottom - L.h - gap));
+    ctx.beginPath(); ctx.arc(W / 2, hy, hr, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.translate(W / 2, hy); if (P) ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = '#111111';
+    poly(ctx, [[-hr * 0.62, 0], [-hr * 0.16, -hr * 0.3], [-hr * 0.16, hr * 0.3]]);
+    poly(ctx, [[hr * 0.62, 0], [hr * 0.16, -hr * 0.3], [hr * 0.16, hr * 0.3]]);
+    ctx.restore();
+    // labels come from the Tag field ("Sebelum / Selepas"); BEFORE / AFTER otherwise
+    const parts = s.kicker.split(/[\/|]/).map(t => t.trim()).filter(Boolean);
+    const [la, lb] = parts.length === 2 ? parts : ['Before', 'After'];
+    const lh = u * 0.075, dark = { bg: '#111111', fg: '#FFFFFF' };
+    if (!P) {
+      pill(g, la, pad, pad, lh, { ...dark, maxW: W / 2 - pad * 1.5 });
+      pill(g, lb, W - pad, pad, lh, { align: 'right', maxW: W / 2 - pad * 1.5 });
+    } else {
+      pill(g, la, pad, Y(0.15), lh, { ...dark, maxW: W - pad * 2 });
+      pill(g, lb, pad, H / 2 + gap, lh, { maxW: W - pad * 2 });
+    }
+    drawLines(g, L, W / 2, tBottom - L.h, 'center');
+    if (bH) brand(g, W / 2, tBottom + gap, bH, { align: 'center', shadow: true });
+  },
+
+  mystery(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    const { u, Y, Hh } = g;
+    const RED = '#D7263D';
+    paintBackground(g);
+    if (images.bg) { ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = 'rgba(128,128,128,.85)'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+    fillAll(g, rgba(s.bg, clamp(s.overlay + 0.2, 0, 0.92)));
+    const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.25, W / 2, H / 2, Math.max(W, H) * 0.75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,.7)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+    const num = (s.number || '').trim();
+    const caseNo = num ? `CASE #${/^\d+$/.test(num) ? num.padStart(3, '0') : num.toUpperCase()}` : 'CASE FILE';
+    const pin = (x, y, r) => {
+      ctx.save();
+      setShadow(g, r * 0.8, r * 0.4, 'rgba(0,0,0,.5)');
+      ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    };
+    // black-and-white evidence photo pinned at the top, with red string running off to other clues
+    const evidence = (cx, cy, w, tilt, ends) => {
+      const b = w * 0.06, ph = w * 0.8, h = b + ph + w * 0.2, x0 = -w / 2, y0 = -h / 2, py = y0 + b, pw = w - b * 2;
+      const pl = y0 + b * 0.5, px = cx - Math.sin(tilt) * pl, pyG = cy + Math.cos(tilt) * pl;
+      ctx.save();
+      ctx.strokeStyle = RED; ctx.lineWidth = Math.max(2, w * 0.008);
+      setShadow(g, w * 0.012, w * 0.006, 'rgba(0,0,0,.5)');
+      ends.forEach(([ex, ey]) => {
+        const sag = Math.hypot(ex - px, ey - pyG) * 0.08;
+        ctx.beginPath(); ctx.moveTo(px, pyG); ctx.quadraticCurveTo((px + ex) / 2, (pyG + ey) / 2 + sag, ex, ey); ctx.stroke();
+      });
+      ctx.restore();
+      ends.forEach(([ex, ey]) => { if (ex > 0 && ex < W && ey > 0 && ey < H) pin(ex, ey, w * 0.03); });
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(tilt);
+      setShadow(g, w * 0.05, w * 0.02, 'rgba(0,0,0,.55)');
+      ctx.fillStyle = '#EFE8D8'; ctx.fillRect(x0, y0, w, h);
+      ctx.shadowColor = 'transparent';
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x0 + b, py, pw, ph); ctx.clip();
+      ctx.fillStyle = '#2B2B2E'; ctx.fillRect(x0 + b, py, pw, ph);
+      if (images.bg) drawCover(ctx, images.bg, x0 + b, py, pw, ph, 1, s.bgX, s.bgY);
+      if (images.cut) cutout(g, 0, py + ph, ph * 0.95, pw);
+      if (!images.bg && !images.cut) {
+        ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.font = headFont(ph * 0.5); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('?', 0, py + ph / 2);
+      }
+      ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#808080'; ctx.fillRect(x0 + b, py, pw, ph);
+      ctx.restore();
+      ctx.fillStyle = '#2A2622'; ctx.font = monoFont(w * 0.07, 700); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(caseNo, 0, py + ph + (h - b - ph) / 2, pw);
+      ctx.restore();
+      pin(px, pyG, w * 0.035);
+    };
+    // red rubber stamp with the Tag text
+    const stamp = (cx, cy, h, tilt) => {
+      const t = s.kicker.trim().toUpperCase();
+      if (!t) return;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(tilt);
+      let fs = h * 0.56;
+      ctx.font = uiFont(fs, 900);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = `${(fs * 0.08).toFixed(2)}px`;
+      let tw = ctx.measureText(t).width;
+      if (tw > h * 7) { fs *= h * 7 / tw; ctx.font = uiFont(fs, 900); tw = ctx.measureText(t).width; }
+      const w = tw + h * 0.8;
+      ctx.globalAlpha = 0.92;
+      ctx.strokeStyle = RED; ctx.fillStyle = RED;
+      ctx.lineWidth = h * 0.08; rr(ctx, -w / 2, -h / 2, w, h, h * 0.12); ctx.stroke();
+      ctx.lineWidth = h * 0.03; rr(ctx, -w / 2 + h * 0.13, -h / 2 + h * 0.13, w - h * 0.26, h - h * 0.26, h * 0.08); ctx.stroke();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(t, fs * 0.04, h * 0.04);
+      ctx.restore();
+    };
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.04;
+    if (!P) {
+      const w = Math.min(H * 0.6, W * 0.32), cx = W * 0.74, cy = H * 0.5;
+      evidence(cx, cy, w, 0.05, [[W * 0.56, -H * 0.02], [W * 1.02, H * 0.3], [W * 0.99, H * 1.02]]);
+      stamp(cx - w * 0.15, cy + w * 0.63, H * 0.1, -0.16);
+      stack(g, { x: pad, w: W * 0.54 - pad, top: pad, bottom: H - pad - (bH ? bH + gap : 0), u: H, maxSize: H * 0.2, kicker: false });
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const w = Math.min(W * 0.6, Hh(0.36) / 1.06), cx = W / 2, cy = Y(0.33);
+      evidence(cx, cy, w, -0.04, [[-W * 0.02, Y(0.13)], [W * 1.02, Y(0.18)], [W * 1.02, Y(0.52)]]);
+      stamp(cx + w * 0.18, cy + w * 0.61, u * 0.085, -0.14);
+      const r = stack(g, { x: pad, w: W - pad * 2, top: Y(0.6), bottom: Y(0.85), u, maxSize: u * 0.2, align: 'center', kicker: false, extraH: bH });
+      if (bH) brand(g, W / 2, r.extraY, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  comic(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    if (images.bg) fillAll(g, rgba(s.bg, s.overlay * 0.4));
+    const { u, Y } = g;
+    const hasCut = !!images.cut, m = Math.min(W, H), R = Math.hypot(W, H);
+    const fx = P ? W / 2 : W * 0.74, fy = P ? Y(0.7) : H * 0.55;
+    // speed lines from behind the hero, then halftone dots that grow toward the edges
+    ctx.save();
+    ctx.translate(fx, fy);
+    ctx.fillStyle = rgba(s.accent, images.bg ? 0.3 : 0.22);
+    for (let i = 0; i < 40; i++) {
+      const a = i * Math.PI / 20;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, a, a + Math.PI / 60); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = rgba(isLight(s.bg) ? '#000000' : '#FFFFFF', 0.12);
+    const step = R * 0.018;
+    ctx.beginPath();
+    for (let y = step / 2; y < H; y += step)
+      for (let x = step / 2; x < W; x += step) {
+        const r = step * 0.42 * clamp(Math.hypot(x - fx, y - fy) / (R * 0.6) - 0.25, 0, 1);
+        if (r > step * 0.05) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, Math.PI * 2); }
+      }
+    ctx.fill();
+    ctx.restore();
+    const ink = '#111111', lw = Math.max(3, m * 0.009);
+    const cut = hasCut ? (P ? cutout(g, W / 2, H, H - Y(0.5), W * 0.95) : cutout(g, fx, H, H * 0.95, W * 0.42)) : null;
+    // speech bubble sized to the title; its tail points at tip (or down and to the right)
+    const bubble = (x, y, maxW, maxH, tip, center) => {
+      const px = u * 0.06, py = u * 0.04;
+      const L = measureTitle(g, maxW - px * 2, maxH - py * 2, u * 0.17);
+      const w = L.maxLineW + px * 2, h = L.h + py * 2, r = Math.min(w, h) * 0.32;
+      if (center) x -= w / 2;
+      const [tx, ty] = tip || [x + w * 0.85, y + h + m * 0.1];
+      const tail = [[x + w * 0.55, y + h * 0.75], [x + w * 0.75, y + h * 0.75], [tx, ty]];
+      ctx.save();
+      // outlines first, then fills, so the join between bubble and tail stays clean
+      setShadow(g, m * 0.02, m * 0.008, 'rgba(0,0,0,.35)');
+      ctx.strokeStyle = ink; ctx.lineWidth = lw * 2; ctx.lineJoin = 'round';
+      polyPath(ctx, tail); ctx.stroke();
+      rr(ctx, x, y, w, h, r); ctx.stroke();
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = '#FFFFFF';
+      polyPath(ctx, tail); ctx.fill();
+      rr(ctx, x, y, w, h, r); ctx.fill();
+      ctx.restore();
+      drawLines(g, L, x + w / 2, y + py, 'center', { color: ink, effect: 'none', hlStyle: s.hlStyle === 'color' ? 'marker' : s.hlStyle });
+    };
+    // POW-style burst with the Tag text
+    const burst = (cx, cy, r) => {
+      const t = s.kicker.trim().toUpperCase();
+      if (!t) return;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(-0.12);
+      setShadow(g, r * 0.12, r * 0.04, 'rgba(0,0,0,.35)');
+      ctx.fillStyle = s.accent; ctx.strokeStyle = ink; ctx.lineWidth = lw * 2;
+      starPath(ctx, 0, 0, r, 12, 0.7); ctx.stroke();
+      ctx.shadowColor = 'transparent'; ctx.fill();
+      ctx.font = headFont(100);
+      const mm = ctx.measureText(t), asc = mm.actualBoundingBoxAscent || 72;
+      const size = Math.min(r * 0.5 * 100 / asc, r * 1.25 * 100 / mm.width);
+      ctx.font = headFont(size); ctx.fillStyle = inkOn(s.accent); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(t, 0, asc * size / 200);
+      ctx.restore();
+    };
+    const bH = hasBrand() ? u * 0.06 : 0;
+    if (!P) {
+      bubble(pad, pad, (hasCut ? W * 0.56 : W * 0.64) - pad, H * 0.56, cut ? [cut.x + cut.w * 0.12, cut.y + cut.h * 0.28] : null, false);
+      burst(pad + H * 0.17, H * 0.79, H * 0.16);
+      if (bH) brand(g, pad + H * 0.4, H - pad - bH, bH, { chip: true });
+    } else {
+      bubble(W / 2, Y(0.14), W - pad * 2, Y(0.44) - Y(0.14), cut ? [cut.x + cut.w * 0.3, cut.y + cut.h * 0.1] : null, true);
+      burst(W * 0.8, Y(0.53), u * 0.12);
+      if (bH) brand(g, pad, Y(0.85) - bH, bH, { chip: true });
+    }
+    // comic panel: white gutter and a black border
+    const gut = m * 0.022, bw = Math.max(3, m * 0.012);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, W, gut); ctx.fillRect(0, H - gut, W, gut); ctx.fillRect(0, 0, gut, H); ctx.fillRect(W - gut, 0, gut, H);
+    ctx.strokeStyle = ink; ctx.lineWidth = bw;
+    ctx.strokeRect(gut + bw / 2, gut + bw / 2, W - gut * 2 - bw, H - gut * 2 - bw);
+  },
+
+  cinema(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    const { u, Y, Hh } = g;
+    // the title is measured and drawn with the same wide letter spacing
+    const spaced = fn => {
+      ctx.save();
+      if ('letterSpacing' in ctx) ctx.letterSpacing = `${(u * 0.012).toFixed(1)}px`;
+      const r = fn();
+      ctx.restore();
+      return r;
+    };
+    // small, very widely spaced line, like film credits
+    const credit = (text, x, y, size) => {
+      text = (text || '').trim().toUpperCase();
+      if (!text) return;
+      ctx.save();
+      ctx.font = uiFont(size, 600);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = `${(size * 0.35).toFixed(1)}px`;
+      setShadow(g, size * 0.6, 0, 'rgba(0,0,0,.6)');
+      ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(text, x + size * 0.175, y, W - pad * 2);   // spacing adds a gap after the last letter; nudge back to centre
+      ctx.restore();
+    };
+    const bH = hasBrand() ? u * 0.05 : 0;
+    if (!P) {
+      paintBackground(g);
+      fillAll(g, rgba(s.bg, s.overlay * 0.3));
+      const sh = ctx.createLinearGradient(0, H * 0.35, 0, H);
+      sh.addColorStop(0, 'rgba(0,0,0,0)'); sh.addColorStop(1, `rgba(0,0,0,${(0.3 + s.overlay * 0.4).toFixed(2)})`);
+      ctx.fillStyle = sh; ctx.fillRect(0, 0, W, H);
+      const bar = H * 0.115;
+      ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, W, bar); ctx.fillRect(0, H - bar, W, bar);
+      const kH = s.kicker.trim() ? H * 0.03 : 0;
+      const L = spaced(() => measureTitle(g, W * 0.84, H * 0.36 - kH * 2.4, H * 0.17));
+      const y = H - bar - H * 0.06 - L.h;
+      spaced(() => drawLines(g, L, W / 2, y, 'center'));
+      if (kH) credit(s.kicker, W / 2, y - kH * 1.3, kH);
+      if (bH) brand(g, W / 2, H - bar + (bar - bH) / 2, bH, { align: 'center', color: '#FFFFFF' });
+    } else {
+      // a widescreen strip of the photo over a blurred copy of it
+      ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, W, H);
+      if (images.bg) { drawCover(ctx, blurredPhoto(images.bg, 0.7), 0, 0, W, H); fillAll(g, 'rgba(0,0,0,.55)'); }
+      else { paintBackground(g, 0, 0, W, H, false); fillAll(g, 'rgba(0,0,0,.35)'); }
+      const sy = Y(0.3), sh = Math.min(W * 0.5, Hh(0.24));
+      ctx.save();
+      setShadow(g, u * 0.06, u * 0.02, 'rgba(0,0,0,.6)');
+      ctx.fillStyle = '#000000'; ctx.fillRect(0, sy, W, sh);
+      ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(0, sy, W, sh); ctx.clip(); paintBackground(g, 0, sy, W, sh); ctx.restore();
+      const kH = s.kicker.trim() ? u * 0.032 : 0;
+      if (kH) credit(s.kicker, W / 2, sy - u * 0.06, kH);
+      const top = sy + sh + u * 0.06, bottom = Y(0.85) - (bH ? bH + u * 0.03 : 0);
+      const L = spaced(() => measureTitle(g, W - pad * 2, bottom - top, u * 0.17));
+      spaced(() => drawLines(g, L, W / 2, top + (bottom - top - L.h) / 2, 'center'));
+      if (bH) brand(g, W / 2, Y(0.85) - bH, bH, { align: 'center', color: '#FFFFFF' });
+    }
+  },
+
+  music(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    const { u, Y, Hh } = g;
+    if (images.bg) { drawCover(ctx, blurredPhoto(images.bg, 0.8), 0, 0, W, H); fillAll(g, rgba(s.bg, clamp(s.overlay + 0.25, 0, 0.92))); }
+    else paintBackground(g);
+    // cover art: the background photo, else the cut-out on a gradient, else two music notes
+    const art = (x, y, a) => {
+      ctx.save();
+      setShadow(g, a * 0.08, a * 0.03, 'rgba(0,0,0,.5)');
+      const gr = ctx.createLinearGradient(x, y, x + a, y + a);
+      gr.addColorStop(0, s.accent); gr.addColorStop(1, rotateHue(s.accent, -60));
+      ctx.fillStyle = gr; rr(ctx, x, y, a, a, a * 0.05); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      rr(ctx, x, y, a, a, a * 0.05); ctx.clip();
+      if (images.bg) drawPhoto(g, x, y, a, a);
+      else if (images.cut) cutout(g, x + a / 2, y + a, a * 0.92, a * 0.92);
+      else {
+        const n = a * 0.42, cx = x + a / 2, cy = y + a / 2;
+        ctx.fillStyle = rgba(inkOn(s.accent), 0.85);
+        [[-0.3, 0.3], [0.3, 0.2]].forEach(([dx, dy]) => {
+          ctx.beginPath(); ctx.ellipse(cx + dx * n, cy + dy * n, n * 0.17, n * 0.13, -0.4, 0, Math.PI * 2); ctx.fill();
+          ctx.fillRect(cx + dx * n + n * 0.1, cy + (dy - 0.75) * n, n * 0.06, n * 0.75);
+        });
+        poly(ctx, [[cx - 0.2 * n, cy - 0.45 * n], [cx + 0.46 * n, cy - 0.55 * n], [cx + 0.46 * n, cy - 0.4 * n], [cx - 0.2 * n, cy - 0.3 * n]]);
+      }
+      ctx.restore();
+    };
+    // progress bar with times, then previous / play / next
+    const player = (x, y, w, h) => {
+      const t = h * 0.09, by = y + t, done = 0.38;
+      ctx.save();
+      ctx.fillStyle = rgba(s.text, 0.25); rr(ctx, x, by - t / 2, w, t, t / 2); ctx.fill();
+      ctx.fillStyle = s.accent; rr(ctx, x, by - t / 2, w * done, t, t / 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + w * done, by, t * 1.5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = rgba(s.text, 0.7); ctx.font = monoFont(h * 0.13); ctx.textBaseline = 'top';
+      ctx.fillText('1:24', x, by + t * 2.2);
+      ctx.textAlign = 'right'; ctx.fillText('3:45', x + w, by + t * 2.2);
+      const cx = x + w / 2, cy = y + h * 0.7, pr = h * 0.25, ts = h * 0.13;
+      setShadow(g, pr * 0.4, pr * 0.1, 'rgba(0,0,0,.35)');
+      ctx.fillStyle = s.accent; ctx.beginPath(); ctx.arc(cx, cy, pr, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.fillStyle = inkOn(s.accent);
+      poly(ctx, [[cx - pr * 0.3, cy - pr * 0.42], [cx + pr * 0.48, cy], [cx - pr * 0.3, cy + pr * 0.42]]);
+      ctx.fillStyle = s.text;
+      [-1, 1].forEach(d => {
+        const sx = cx + d * pr * 2.6;
+        poly(ctx, [[sx - d * ts * 0.6, cy - ts], [sx + d * ts * 0.9, cy], [sx - d * ts * 0.6, cy + ts]]);
+        ctx.fillRect(d > 0 ? sx + ts * 0.9 : sx - ts * 1.2, cy - ts, ts * 0.3, ts * 2);
+      });
+      ctx.restore();
+    };
+    const artist = (x, y, h, align, maxW) => {
+      ctx.save();
+      ctx.font = uiFont(h * 0.78, 600); ctx.fillStyle = rgba(s.text, 0.72); ctx.textAlign = align; ctx.textBaseline = 'middle';
+      ctx.fillText(s.kicker.trim(), x, y + h / 2, maxW);
+      ctx.restore();
+    };
+    const kH = s.kicker.trim() ? u * 0.055 : 0, bH = hasBrand() ? u * 0.055 : 0, gap = u * 0.03;
+    if (!P) {
+      const a = H * 0.64, ay = (H - a) / 2;
+      art(pad, ay, a);
+      const x = pad + a + W * 0.045, w = W - pad - x, pH = H * 0.2;
+      const fixed = (bH ? bH + gap : 0) + (kH ? kH + gap : 0) + gap + pH;
+      const L = measureTitle(g, w, a - fixed, H * 0.17);
+      let y = ay + (a - fixed - L.h) / 2;
+      if (bH) { brand(g, x, y, bH, { shadow: true }); y += bH + gap; }
+      drawLines(g, L, x, y, 'left'); y += L.h + gap * 0.6;
+      if (kH) { artist(x, y, kH, 'left', w); y += kH + gap; }
+      player(x, y + gap * 0.4, w, pH);
+    } else {
+      const a = Math.min(W * 0.66, Hh(0.33)), ay = Y(0.13);
+      art((W - a) / 2, ay, a);
+      const pH = u * 0.2, top = ay + a + u * 0.05, bottom = Y(0.87);
+      const fixed = (kH ? kH + gap : 0) + gap + pH + (bH ? bH + gap : 0);
+      const L = measureTitle(g, W - pad * 2, bottom - top - fixed, u * 0.17);
+      let y = top + (bottom - top - fixed - L.h) / 2;
+      drawLines(g, L, W / 2, y, 'center'); y += L.h + gap * 0.6;
+      if (kH) { artist(W / 2, y, kH, 'center', W - pad * 2); y += kH + gap; }
+      player(pad, y + gap * 0.4, W - pad * 2, pH); y += pH + gap;
+      if (bH) brand(g, W / 2, y, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  recipe(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g, 0, 0, W, H, false);
+    const { u, Y, Hh } = g;
+    // the photo on a plate, with a few herb leaves tucked under the rim
+    const plate = (cx, cy, r) => {
+      const leaf = (a, len, rot) => {
+        ctx.save();
+        ctx.translate(cx + Math.cos(a) * r * 1.02, cy + Math.sin(a) * r * 1.02); ctx.rotate(rot);
+        ctx.fillStyle = '#4E9F3D'; ctx.beginPath(); ctx.ellipse(0, 0, len, len * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = Math.max(1, len * 0.06);
+        ctx.beginPath(); ctx.moveTo(-len * 0.8, 0); ctx.lineTo(len * 0.8, 0); ctx.stroke();
+        ctx.restore();
+      };
+      leaf(-2.5, r * 0.2, -0.5); leaf(-2.2, r * 0.15, 0.4); leaf(0.8, r * 0.18, 2.3); leaf(1.05, r * 0.13, 1.4);
+      ctx.save();
+      setShadow(g, r * 0.12, r * 0.05, 'rgba(0,0,0,.4)');
+      ctx.fillStyle = '#FBFAF7'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = 'rgba(0,0,0,.08)'; ctx.lineWidth = Math.max(1, r * 0.012);
+      ctx.beginPath(); ctx.arc(cx, cy, r * 0.86, 0, Math.PI * 2); ctx.stroke();
+      const fr = r * 0.8;
+      ctx.beginPath(); ctx.arc(cx, cy, fr, 0, Math.PI * 2); ctx.clip();
+      if (images.bg) drawPhoto(g, cx - fr, cy - fr, fr * 2, fr * 2);
+      else if (!images.cut) {
+        const gr = ctx.createRadialGradient(cx - fr * 0.3, cy - fr * 0.3, 0, cx, cy, fr);
+        gr.addColorStop(0, shade(s.accent, 0.25)); gr.addColorStop(1, shade(s.accent, -0.35));
+        ctx.fillStyle = gr; ctx.fillRect(cx - fr, cy - fr, fr * 2, fr * 2);
+      }
+      ctx.restore();
+      // a transparent dish PNG sits on the plate
+      if (images.cut) cutout(g, cx, cy + r * 0.6, r * 1.45, r * 1.7);
+    };
+    const badge = (s.number || '').trim();
+    if (!P) {
+      const r = Math.min(H * 0.43, W * 0.24), cx = W - pad * 0.6 - r * 1.05, cy = H * 0.52;
+      plate(cx, cy, r);
+      if (badge) drawBadge(g, cx - r * 0.8, cy - r * 0.72, r * 0.27, badge);
+      const bH = hasBrand() ? H * 0.06 : 0, gap = H * 0.04;
+      stack(g, { x: pad, w: cx - r * 1.1 - pad * 1.8, top: pad, bottom: H - pad - (bH ? bH + gap : 0), u: H, maxSize: H * 0.22 });
+      if (bH) brand(g, pad, H - pad - bH, bH, { shadow: true });
+    } else {
+      const r = Math.min(W * 0.37, Hh(0.19)), cx = W / 2, cy = Y(0.33);
+      plate(cx, cy, r);
+      if (badge) drawBadge(g, cx + r * 0.8, cy - r * 0.68, r * 0.3, badge);
+      const bH = hasBrand() ? u * 0.065 : 0;
+      const st = stack(g, { x: pad, w: W - pad * 2, top: Y(0.58), bottom: Y(0.85), u, maxSize: u * 0.222, align: 'center', extraH: bH });
+      if (bH) brand(g, W / 2, st.extraY, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  chat(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.2, 0, 0.95) : s.overlay * 0.3));
+    const { u, Y } = g;
+    const hasCut = !!images.cut;
+    const msgs = String(s.title).split('\n').map(t => t.trim()).filter(Boolean).slice(0, 6);
+    const name = s.kicker.trim();
+    const inBg = isLight(s.bg) ? '#FFFFFF' : shade(s.bg, 0.14), inInk = inkOn(inBg), outInk = inkOn(s.accent);
+    // contact: avatar (logo or first letter) with an online dot, and the name
+    const header = (x, y, h) => {
+      const r = h / 2;
+      ctx.save();
+      setShadow(g, h * 0.2, h * 0.05, 'rgba(0,0,0,.3)');
+      ctx.fillStyle = s.accent; ctx.beginPath(); ctx.arc(x + r, y + r, r, 0, Math.PI * 2); ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.save();
+      ctx.clip();
+      if (images.logo) drawCover(ctx, images.logo, x, y, h, h);
+      else {
+        ctx.fillStyle = outInk; ctx.font = uiFont(h * 0.5, 800); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(name[0].toUpperCase(), x + r, y + r + h * 0.03);
+      }
+      ctx.restore();
+      ctx.fillStyle = '#2ECC71'; ctx.strokeStyle = isLight(s.bg) ? '#FFFFFF' : s.bg; ctx.lineWidth = h * 0.06;
+      ctx.beginPath(); ctx.arc(x + h * 0.85, y + h * 0.85, h * 0.14, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      setShadow(g, h * 0.3, h * 0.04, 'rgba(0,0,0,.45)');
+      ctx.font = uiFont(h * 0.42, 800); ctx.fillStyle = s.text; ctx.textBaseline = 'middle';
+      ctx.fillText(name, x + h * 1.3, y + r + h * 0.03, Math.max(1, W - x - h * 1.3 - pad));
+      ctx.restore();
+    };
+    // every message gets the same text size; incoming on the left, replies on the right. Returns the bottom.
+    const thread = (x, w, top, bottom) => {
+      const hh = name ? u * 0.075 : 0, hgap = u * 0.04, gap = u * 0.025, px = u * 0.035, py = u * 0.022;
+      const n = msgs.length || 1, bw = w * 0.82;
+      const each = (bottom - top - (hh ? hh + hgap : 0) - gap * (n - 1)) / n - py * 2;
+      let Ls = msgs.map(t => measureText(g, t, bw - px * 2, each, u * 0.14));
+      if (Ls.length) { const eq = Math.min(...Ls.map(l => l.size)); Ls = msgs.map(t => measureText(g, t, bw - px * 2, each, eq, false)); }
+      const total = (hh ? hh + hgap : 0) + Ls.reduce((a, L) => a + L.h + py * 2, 0) + gap * Math.max(0, Ls.length - 1);
+      let y = top + (bottom - top - total) / 2;
+      if (hh) { header(x, y, hh); y += hh + hgap; }
+      Ls.forEach((L, i) => {
+        const out = i % 2 === 1, bwi = L.maxLineW + px * 2, bhi = L.h + py * 2, r = Math.min(bhi / 2, u * 0.035);
+        const bx = out ? x + w - bwi : x, ty = y + bhi, tl = u * 0.022;
+        ctx.save();
+        ctx.fillStyle = out ? s.accent : inBg;
+        setShadow(g, u * 0.03, u * 0.008, 'rgba(0,0,0,.3)');
+        rr(ctx, bx, y, bwi, bhi, r); ctx.fill();
+        ctx.shadowColor = 'transparent';
+        poly(ctx, out ? [[bx + bwi - r * 1.6, ty], [bx + bwi + tl, ty], [bx + bwi - r * 0.2, ty - r * 1.2]]
+          : [[bx + r * 1.6, ty], [bx - tl, ty], [bx + r * 0.2, ty - r * 1.2]]);
+        ctx.restore();
+        drawLines(g, L, bx + px, y + py, 'left', out
+          ? { color: outInk, accent: outInk, effect: 'none', hlStyle: s.hlStyle === 'brush' ? 'brush' : 'box' }
+          : { color: inInk, effect: 'none' });
+        y += bhi + gap;
+      });
+      return y - gap;
+    };
+    const bH = hasBrand() ? u * 0.06 : 0, gap = u * 0.035;
+    if (!P) {
+      const w = hasCut ? W * 0.58 - pad : W * 0.7, x = hasCut ? pad : (W - w) / 2;
+      thread(x, w, pad, H - pad - (bH ? bH + gap : 0));
+      if (hasCut) cutout(g, W * 0.8, H, H * 0.92, W * 0.38);
+      if (bH) brand(g, x, H - pad - bH, bH, { shadow: true });
+    } else {
+      const end = thread(pad, W - pad * 2, Y(0.14), Y(hasCut ? 0.6 : 0.85) - (bH ? bH + gap : 0));
+      if (hasCut) cutout(g, W / 2, H, H - Y(0.62), W * 0.9);
+      if (bH) brand(g, W / 2, end + gap, bH, { align: 'center', shadow: true });
+    }
+  },
+
+  post(g) {
+    const { ctx, W, H, P, pad, s } = g;
+    paintBackground(g);
+    fillAll(g, rgba(s.bg, images.bg ? clamp(s.overlay + 0.2, 0, 0.95) : s.overlay * 0.3));
+    const { u, Y } = g;
+    const hasCut = !!images.cut;
+    const card = isLight(s.bg) ? '#FFFFFF' : mix(s.bg, '#16181C', 0.6), ink = inkOn(card), sub = rgba(ink, 0.55);
+    const name = s.kicker.trim() || s.handle.trim(), handle = s.kicker.trim() ? s.handle.trim() : '';
+    const likes = (s.number || '').trim();
+    const heart = (cx, cy, r) => {
+      ctx.beginPath(); ctx.moveTo(cx, cy + r * 0.8);
+      ctx.bezierCurveTo(cx - r * 1.35, cy - r * 0.1, cx - r * 0.6, cy - r * 1.1, cx, cy - r * 0.4);
+      ctx.bezierCurveTo(cx + r * 0.6, cy - r * 1.1, cx + r * 1.35, cy - r * 0.1, cx, cy + r * 0.8);
+      ctx.fill();
+    };
+    // reply, repost, like (with the count) and share
+    const actions = (x, y, w, h) => {
+      const q = w / 4, i = h * 0.36, cy = y + h / 2;
+      ctx.save();
+      ctx.strokeStyle = sub; ctx.fillStyle = sub; ctx.lineWidth = Math.max(1.5, h * 0.07); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      let cx = x + i;
+      rr(ctx, cx - i, cy - i * 0.8, i * 2, i * 1.45, i * 0.6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx - i * 0.5, cy + i * 0.62); ctx.lineTo(cx - i * 0.75, cy + i * 1.05); ctx.lineTo(cx - i * 0.05, cy + i * 0.65); ctx.stroke();
+      cx = x + q + i;
+      ctx.beginPath();
+      ctx.moveTo(cx - i, cy - i * 0.4); ctx.lineTo(cx + i, cy - i * 0.4);
+      ctx.moveTo(cx + i * 0.55, cy - i * 0.85); ctx.lineTo(cx + i, cy - i * 0.4); ctx.lineTo(cx + i * 0.55, cy + i * 0.05);
+      ctx.moveTo(cx + i, cy + i * 0.5); ctx.lineTo(cx - i, cy + i * 0.5);
+      ctx.moveTo(cx - i * 0.55, cy + i * 0.05); ctx.lineTo(cx - i, cy + i * 0.5); ctx.lineTo(cx - i * 0.55, cy + i * 0.95);
+      ctx.stroke();
+      cx = x + q * 2 + i;
+      ctx.fillStyle = '#F4245E'; heart(cx, cy, i * 0.95);
+      if (likes) { ctx.font = uiFont(h * 0.42, 700); ctx.textBaseline = 'middle'; ctx.fillText(likes, cx + i * 1.6, cy + h * 0.02); }
+      cx = x + q * 3 + i;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + i * 0.3); ctx.lineTo(cx, cy - i * 0.95);
+      ctx.moveTo(cx - i * 0.5, cy - i * 0.5); ctx.lineTo(cx, cy - i * 0.95); ctx.lineTo(cx + i * 0.5, cy - i * 0.5);
+      ctx.moveTo(cx - i, cy - i * 0.1); ctx.lineTo(cx - i, cy + i * 0.9); ctx.lineTo(cx + i, cy + i * 0.9); ctx.lineTo(cx + i, cy - i * 0.1);
+      ctx.stroke();
+      ctx.restore();
+    };
+    // the card: avatar, name + tick + handle, the post text (your title), then the actions
+    const draw = (x, w, top, bottom) => {
+      const p = u * 0.05, ah = u * 0.1, fh = u * 0.06, gap = u * 0.035, r = u * 0.035;
+      const L = measureTitle(g, w - p * 2, bottom - top - p * 2 - ah - fh - gap * 2, u * 0.15);
+      const h = p * 2 + ah + gap + L.h + gap + fh, y = top + (bottom - top - h) / 2;
+      ctx.save();
+      setShadow(g, u * 0.08, u * 0.025, 'rgba(0,0,0,.45)');
+      ctx.fillStyle = card; rr(ctx, x, y, w, h, r); ctx.fill();
+      ctx.restore();
+      const ax = x + p, ay = y + p, ar = ah / 2;
+      ctx.save();
+      ctx.fillStyle = s.accent; ctx.beginPath(); ctx.arc(ax + ar, ay + ar, ar, 0, Math.PI * 2); ctx.fill(); ctx.clip();
+      if (images.logo) drawCover(ctx, images.logo, ax, ay, ah, ah);
+      else if (images.cut) drawCover(ctx, images.cut, ax, ay, ah, ah, 1.15, 0.5, 0.1);
+      else if (name) {
+        ctx.fillStyle = inkOn(s.accent); ctx.font = uiFont(ah * 0.5, 800); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(name.replace(/^@/, '')[0].toUpperCase(), ax + ar, ay + ar + ah * 0.03);
+      }
+      ctx.restore();
+      const nx = ax + ah + u * 0.025, maxW = x + w - p - nx - ah * 0.5;
+      ctx.save();
+      ctx.textBaseline = 'middle';
+      if (name) {
+        const ns = ah * 0.34, ny = ay + ah * (handle ? 0.32 : 0.5);
+        ctx.font = uiFont(ns, 800); ctx.fillStyle = ink;
+        const nw = Math.min(ctx.measureText(name).width, maxW - ns * 1.4);
+        ctx.fillText(name, nx, ny, nw);
+        // verified tick
+        const vx = nx + nw + ns * 0.7, vr = ns * 0.5;
+        ctx.fillStyle = s.accent; starPath(ctx, vx, ny, vr * 1.15, 8, 0.82); ctx.fill();
+        ctx.strokeStyle = inkOn(s.accent); ctx.lineWidth = vr * 0.24; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(vx - vr * 0.42, ny + vr * 0.02); ctx.lineTo(vx - vr * 0.1, ny + vr * 0.34); ctx.lineTo(vx + vr * 0.45, ny - vr * 0.3); ctx.stroke();
+      }
+      if (handle) { ctx.font = uiFont(ah * 0.27, 600); ctx.fillStyle = sub; ctx.fillText(handle, nx, ay + ah * 0.72, maxW); }
+      ctx.fillStyle = sub;
+      for (let d = 0; d < 3; d++) { ctx.beginPath(); ctx.arc(x + w - p - ah * 0.08 - d * ah * 0.16, ay + ah * 0.3, ah * 0.045, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+      drawLines(g, L, x + p, ay + ah + gap, 'left', { color: ink, effect: 'none', hlStyle: s.hlStyle === 'color' && isLight(card) ? 'marker' : s.hlStyle });
+      actions(x + p, ay + ah + gap + L.h + gap, Math.min(w - p * 2, u * 1.1), fh);
+    };
+    if (!P) {
+      const w = hasCut ? W * 0.62 - pad : W * 0.74, x = hasCut ? pad : (W - w) / 2;
+      draw(x, w, pad, H - pad);
+      if (hasCut) cutout(g, W * 0.82, H, H * 0.92, W * 0.36);
+    } else {
+      draw(pad * 0.7, W - pad * 1.4, Y(0.14), Y(hasCut ? 0.58 : 0.85));
+      if (hasCut) cutout(g, W / 2, H, H - Y(0.6), W * 0.9);
+    }
+  },
+
   frame(g) {
     const { ctx, W, H, P, pad, s } = g;
     const m = Math.min(W, H), b = Math.round(m * 0.035);
@@ -1834,7 +3300,7 @@ const RENDER = {
     setShadow(g, pw * 0.05, pw * 0.02, 'rgba(0,0,0,.4)');
     ctx.fillStyle = '#FBFAF7'; ctx.fillRect(x0, y0, pw, ph);
     ctx.shadowColor = 'transparent';
-    if (images.bg) drawCover(ctx, images.bg, px, py, photoW, photoH, s.bgZoom, s.bgX, s.bgY);
+    if (images.bg) drawPhoto(g, px, py, photoW, photoH);
     else {
       const gr = ctx.createLinearGradient(px, py, px + photoW, py + photoH);
       gr.addColorStop(0, shade(s.accent, 0.25)); gr.addColorStop(1, shade(s.accent, -0.35));
@@ -1902,8 +3368,8 @@ const RENDER = {
     const { u, Y } = g;
     let right = W - pad;
     if (images.bg) {
-      if (P) drawCover(ctx, images.bg, 0, 0, W, Y(0.42), s.bgZoom, s.bgX, s.bgY);
-      else { drawCover(ctx, images.bg, W * 0.62, 0, W * 0.38, H, s.bgZoom, s.bgX, s.bgY); right = W * 0.62 - pad; }
+      if (P) drawPhoto(g, 0, 0, W, Y(0.42));
+      else { drawPhoto(g, W * 0.62, 0, W * 0.38, H); right = W * 0.62 - pad; }
     }
     const kH = s.kicker.trim() ? u * 0.045 : 0;
     const top = P ? Y(images.bg ? 0.47 : 0.15) : pad, bottom = P ? Y(0.82) : H - pad;
@@ -1931,7 +3397,7 @@ const RENDER = {
         rr(ctx, vx + r * 0.9, vy + r * 0.9, vw, vh, r); ctx.fill();
         ctx.save();
         rr(ctx, vx, vy, vw, vh, r); ctx.clip();
-        drawCover(ctx, images.bg, vx, vy, vw, vh, s.bgZoom, s.bgX, s.bgY);
+        drawPhoto(g, vx, vy, vw, vh);
         ctx.restore();
       } else if (visual === 'cut') {
         ctx.fillStyle = s.accent;
@@ -2068,6 +3534,17 @@ function buildUI() {
   tplBox.addEventListener('click', e => {
     const b = e.target.closest('.tpl'); if (!b) return;
     state.template = b.dataset.tpl; syncUI(); changed();
+  });
+
+  const catBox = document.getElementById('tplCats');
+  catBox.innerHTML = Object.entries(TEMPLATE_CATS).map(([id, name]) =>
+    `<button class="cat${id === 'all' ? ' on' : ''}" data-cat="${id}">${esc(name)}</button>`).join('');
+  catBox.addEventListener('click', e => {
+    const b = e.target.closest('.cat'); if (!b) return;
+    const cat = b.dataset.cat;
+    catBox.querySelectorAll('.cat').forEach(c => c.classList.toggle('on', c === b));
+    tplBox.querySelectorAll('.tpl').forEach(t => { t.hidden = cat !== 'all' && !TEMPLATES[t.dataset.tpl].cats.split(' ').includes(cat); });
+    renderThumbs();
   });
 
   const lookBox = document.getElementById('looks');
@@ -2238,6 +3715,7 @@ function renderThumbs() {
     render(c.getContext('2d'), b.dataset.fmt, k, false);
   });
   document.querySelectorAll('.tpl').forEach(b => {
+    if (b.hidden) return;   // filtered out by a category chip; drawn when it's shown again
     const c = b.querySelector('canvas');
     render(c.getContext('2d'), 'youtube', c.width / 1280, false, b.dataset.tpl);
   });
